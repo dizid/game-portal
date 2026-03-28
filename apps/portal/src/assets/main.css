@@ -1,0 +1,84 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6366f1;
+  --color-primary-light: #818cf8;
+  --color-primary-dark: #4f46e5;
+  --color-accent: #f59e0b;
+  --color-surface: #1e1b2e;
+  --color-surface-light: #2a2640;
+  --color-surface-lighter: #363254;
+
+  --font-family-display: 'Inter', sans-serif;
+  --font-family-sans: 'Inter', sans-serif;
+
+  /* Category colors as CSS custom properties */
+  --color-cat-arcade: #ef4444;
+  --color-cat-puzzle: #3b82f6;
+  --color-cat-strategy: #22c55e;
+  --color-cat-simulation: #f59e0b;
+  --color-cat-racing: #f97316;
+  --color-cat-action: #f43f5e;
+  --color-cat-word: #14b8a6;
+  --color-cat-card: #a855f7;
+  --color-cat-idle: #10b981;
+  --color-cat-trivia: #eab308;
+  --color-cat-adventure: #6366f1;
+  --color-cat-experimental: #ec4899;
+}
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-surface);
+  color: #f1f0ff;
+  font-family: var(--font-family-sans);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Glass morphism utility */
+.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  background-color: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-lighter);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
+
+/* Smooth transitions for interactive elements */
+a, button {
+  transition: all 0.2s ease;
+}
+
+/* Focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

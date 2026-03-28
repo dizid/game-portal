@@ -1,0 +1,24 @@
+{
+  "name": "game-portal",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "games/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev --filter=@game-portal/portal",
+    "build": "turbo build",
+    "build:portal": "turbo build --filter=@game-portal/portal",
+    "build:games": "turbo build --filter='./games/*'",
+    "lint": "turbo lint",
+    "clean": "turbo clean",
+    "new-game": "turbo gen workspace --copy games/snake"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.0"
+  },
+  "packageManager": "npm@10.9.0"
+}

@@ -67,6 +67,62 @@ const INITIAL_GAMES: GameMeta[] = [
 
   // ── Adventure ──
   g('text-rpg-001', 'text-rpg', 'Text RPG', 'A village needs your help. Fight monsters, find treasure, slay the dragon!', 'adventure', 'complex', ['story', 'choices', 'combat'], 10, 30, ['pioneer', 'strategist']),
+
+  // ── Economics & Game Theory ──
+  g('consensus-engine-001', 'consensus-engine', 'Consensus Engine', 'Chair a committee of 7 AI agents. Spend Political Capital to lobby, poll, and broker deals. Can you pass the resolution?', 'strategy', 'standard', ['game-theory', 'politics', 'negotiation', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('price-of-anarchy-001', 'price-of-anarchy', 'Price of Anarchy', 'Assign 100 cars across road networks to minimize commute time. Watch out for the Braess Paradox!', 'experimental', 'light', ['game-theory', 'economics', 'braess', 'unique'], 3, 10, ['strategist', 'pioneer']),
+  g('vickreys-ruin-001', 'vickreys-ruin', "Vickrey's Ruin", '12 auctions across 4 formats: First-Price, Vickrey, All-Pay, and Dutch. Bid strategically for profit.', 'strategy', 'standard', ['auctions', 'economics', 'bidding', 'unique'], 5, 15, ['strategist', 'champion'], true),
+  g('tragedy-pasture-001', 'tragedy-pasture', 'Tragedy Pasture', 'A shared commons with 4 AI shepherds. Graze sheep for gold, but overgrazing destroys everyone.', 'simulation', 'standard', ['game-theory', 'commons', 'social', 'unique'], 5, 15, ['strategist', 'pioneer']),
+  g('keynesian-beauty-001', 'keynesian-beauty', 'Keynesian Beauty', 'Pick a number closest to 2/3 of the group average. 10 rounds. Outsmart 5 AI players with varying reasoning depths.', 'strategy', 'micro', ['game-theory', 'coordination', 'reasoning', 'unique'], 2, 8, ['strategist', 'snacker'], false, true),
+  g('arbitrage-express-001', 'arbitrage-express', 'Arbitrage Express', 'Trade 4 goods across 5 cities in 30 turns. Buy low, sell high before market events shake everything up.', 'simulation', 'standard', ['economics', 'trading', 'arbitrage', 'unique'], 5, 15, ['strategist', 'collector'], true),
+  g('dead-drop-001', 'dead-drop', 'Dead Drop', '6 agents on a city grid. One is the spy. Use Bayesian evidence from wiretaps and surveillance to find them.', 'strategy', 'standard', ['deduction', 'bayesian', 'spy', 'unique'], 5, 10, ['strategist', 'pioneer'], true),
+  g('supply-web-001', 'supply-web', 'Supply Web', 'Build a factory-to-shop supply network. Survive disasters with redundancy, reinforced edges, and buffer stock.', 'strategy', 'standard', ['networks', 'logistics', 'resilience', 'unique'], 5, 15, ['strategist', 'pioneer']),
+
+  // ── Experimental ──
+  g('signal-decay-001', 'signal-decay', 'Signal Decay', 'You ARE the message. Fix corrupted characters before relays destroy 50% of the signal.', 'experimental', 'light', ['typing', 'reaction', 'decay', 'unique'], 2, 10, ['champion', 'pioneer'], true),
+  g('lichen-wars-001', 'lichen-wars', 'Lichen Wars', 'A 40x40 petri dish. Place lichen seeds and watch cellular automaton warfare unfold.', 'experimental', 'standard', ['strategy', 'simulation', 'cellular', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('thermal-drift-001', 'thermal-drift', 'Thermal Drift', 'Guide a Brownian-motion particle to its target using heat sources and cold sinks.', 'experimental', 'light', ['physics', 'puzzle', 'thermal', 'unique'], 3, 10, ['strategist', 'pioneer']),
+  g('half-life-001', 'half-life', 'Half-Life', 'Bet on which radioactive atoms will decay before each tick fires. Statistics gambling!', 'experimental', 'light', ['probability', 'betting', 'science', 'unique'], 3, 10, ['strategist', 'pioneer'], false, true),
+  g('dead-reckoning-001', 'dead-reckoning', 'Dead Reckoning', 'Navigate in dense fog using only a compass and speedometer. Drop anchor to score.', 'experimental', 'standard', ['navigation', 'fog', 'physics', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('memory-palace-001', 'memory-palace', 'Memory Palace', 'Place objects in rooms, then recall where you put them. Rounds get harder.', 'experimental', 'standard', ['memory', 'brain-training', 'spatial', 'unique'], 5, 20, ['strategist', 'collector']),
+  g('interference-001', 'interference', 'Interference', 'Match a ghost wave interference pattern by positioning wave emitters.', 'experimental', 'standard', ['waves', 'physics', 'puzzle', 'unique'], 3, 15, ['pioneer', 'strategist']),
+  g('lorenz-001', 'lorenz', 'Lorenz', 'Nudge a dot following the chaotic Lorenz attractor to collect glowing targets.', 'experimental', 'light', ['chaos', 'physics', 'attractor', 'unique'], 2, 10, ['pioneer', 'champion'], true),
+
+  // ── Biology / Ecosystem ──
+  g('tide-pool-001', 'tide-pool', 'Tide Pool', 'Balance a living tide pool ecosystem. Add species, adjust sunlight, manage minerals. Keep all 4 species alive to score!', 'simulation', 'standard', ['ecosystem', 'simulation', 'biology', 'unique'], 2, 5, ['strategist', 'pioneer'], true),
+  g('predator-drift-001', 'predator-drift', 'Predator Drift', 'You are the fox! Hunt rabbits to survive. Watch population graphs as grass, rabbits, and your energy interplay. Mutation events every 90s!', 'simulation', 'standard', ['ecosystem', 'predator', 'biology', 'unique'], 2, 10, ['champion', 'pioneer'], true),
+  g('quorum-001', 'quorum', 'Quorum', 'Click to lower activation barriers and trigger quorum sensing in bacteria colonies. Dodge phagocytes and use burst signals!', 'experimental', 'standard', ['biology', 'bacteria', 'science', 'unique'], 3, 5, ['pioneer', 'strategist'], true),
+  g('phenotype-001', 'phenotype', 'Phenotype', 'Select creatures to survive each generation. Survivors breed with crossover traits and mutations. 15 generations of natural selection!', 'strategy', 'light', ['evolution', 'genetics', 'science', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('mycelium-001', 'mycelium', 'Mycelium', 'Grow a fungal network through the soil connecting trees to mineral nodes. Fend off rival blue fungus and fruit mushrooms for bonus points!', 'simulation', 'standard', ['biology', 'networks', 'mushrooms', 'unique'], 3, 8, ['strategist', 'pioneer']),
+  g('enzyme-001', 'enzyme', 'Enzyme', 'Catalyse chemical bonds! Click near Brownian-motion molecules to lower activation barriers. Bond complementary pairs before inhibitors interfere!', 'experimental', 'light', ['chemistry', 'physics', 'science', 'unique'], 1, 3, ['champion', 'pioneer'], false, true),
+  g('conways-gardener-001', 'conways-gardener', "Conway's Gardener", 'Place seeds to guide Conway\'s Game of Life to a target pattern. 10 levels — still lifes, oscillators, gliders!', 'puzzle', 'standard', ['cellular-automata', 'logic', 'science', 'unique'], 5, 20, ['strategist', 'pioneer'], true),
+  g('ant-trails-001', 'ant-trails', 'Ant Trails', 'Draw pheromone trails to guide ants to food sources. Trails fade, new food appears, ants discover on their own too!', 'simulation', 'light', ['ants', 'swarm', 'biology', 'unique'], 2, 5, ['pioneer', 'strategist']),
+
+  // ── Social Dynamics & Systems ──
+  g('schelling-sort-001', 'schelling-sort', 'Schelling Sort', 'Place community centers to foster integration in a self-segregating neighborhood. Maximize entropy!', 'strategy', 'standard', ['social', 'simulation', 'systems', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('echo-chamber-001', 'echo-chamber', 'Echo Chamber', 'Seed truth in a network of 40 misinformed people. Share beliefs strategically before misinformation agents fight back.', 'strategy', 'light', ['social', 'networks', 'information', 'unique'], 3, 10, ['strategist', 'pioneer'], true),
+  g('gerrymandr-001', 'gerrymandr', 'Gerrymandr', 'Draw 5 voting districts to win 4+. Then watch the AI gerrymander against you. Who wins the fairness game?', 'strategy', 'standard', ['politics', 'strategy', 'voting', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('rumor-mill-001', 'rumor-mill', 'Rumor Mill', 'Plant a rumor and watch it spread — and mutate. Use Boost, Discredit, and Bridge abilities to control the narrative.', 'strategy', 'light', ['social', 'networks', 'information', 'unique'], 3, 10, ['strategist', 'champion'], false, true),
+  g('panopticon-001', 'panopticon', 'Panopticon', 'Run a surveillance state. Place cameras, unlock informants, manage order vs happiness over 20 tense turns.', 'strategy', 'standard', ['surveillance', 'strategy', 'social', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+
+  // ── Sensory / Audio ──
+  g('doppler-001', 'doppler', 'Doppler', 'Navigate a near-dark maze using only audio cues — Doppler pitch shifts and stereo panning. Collect 10 items in 3 minutes.', 'experimental', 'standard', ['audio', 'navigation', 'sensory', 'unique'], 3, 10, ['pioneer', 'champion'], true),
+
+  // ── Quantum ──
+  g('eigenstate-001', 'eigenstate', 'Eigenstate', 'Collapse quantum cells to make each row a single color. Limited observations — wrong sequence = unsolvable!', 'puzzle', 'standard', ['quantum', 'logic', 'probability', 'unique'], 5, 20, ['strategist', 'pioneer'], true),
+
+  // ── Cryptography ──
+  g('stegano-001', 'stegano', 'Stegano', 'A secret word hides in this image. Isolate channels, view bit planes, apply filters. Decode 8 hidden messages!', 'experimental', 'standard', ['cryptography', 'steganography', 'puzzle', 'unique'], 5, 20, ['strategist', 'pioneer'], true),
+
+  // ── Meta / Experimental ──
+  g('fold-escape-001', 'fold-escape', 'Fold Escape', 'Navigate a maze on paper. Click crease lines to fold the sheet — walls become floors. 10 levels.', 'experimental', 'standard', ['puzzle', 'paper', 'folds', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('bit-rot-001', 'bit-rot', 'Bit Rot', 'Collect items before the system decays. Glitches corrupt controls, visuals, and your score display.', 'experimental', 'light', ['decay', 'corruption', 'horror', 'unique'], 2, 10, ['champion', 'pioneer'], true),
+  g('instruction-creep-001', 'instruction-creep', 'Instruction Creep', 'Click the green circle — but new rules pile on every 30 seconds. They stack, they contradict. 3 lives.', 'experimental', 'light', ['rules', 'chaos', 'reflex', 'unique'], 2, 10, ['champion', 'snacker'], true, true),
+  g('zenos-gauntlet-001', 'zenos-gauntlet', "Zeno's Gauntlet", 'Run to the finish line. Every halfway point doubles the zoom and adds new obstacles. Can you reach 10 zoom levels?', 'experimental', 'light', ['runner', 'zoom', 'paradox', 'unique'], 2, 8, ['champion', 'pioneer'], true),
+  g('phase-space-001', 'phase-space', 'Phase Space', 'Place gravity wells to guide a satellite through orbital waypoints. Beautiful spirograph trajectories.', 'experimental', 'standard', ['physics', 'gravity', 'orbital', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('sunk-cost-001', 'sunk-cost', 'Sunk Cost', 'Start with 1000 pts. Score drains away. Find the tiny cash-out button and press it. Optimal play = quit immediately.', 'experimental', 'micro', ['meta', 'psychology', 'irony', 'unique'], 1, 5, ['pioneer', 'snacker'], false, true),
+  g('cargo-cult-001', 'cargo-cult', 'Cargo Cult', 'Perform the secret 3-step ritual to make it rain. Villagers copy your moves as noise. 10 rounds.', 'experimental', 'standard', ['ritual', 'deduction', 'noise', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
+  g('topology-001', 'topology', 'Topology', 'Deform shapes to match topology — same holes and connected parts, regardless of exact form. 12 levels.', 'experimental', 'standard', ['math', 'topology', 'puzzle', 'unique'], 5, 20, ['strategist', 'pioneer'], true),
 ]
 
 export const useGamesStore = defineStore('games', () => {

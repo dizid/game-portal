@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Fold Escape - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #f5f0e8; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; cursor: pointer; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        pointer-events: none; padding: 10px 14px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 13px; color: #3a2d1a; user-select: none;
+      }
+      .hud-box {
+        background: rgba(255,255,255,0.7); border: 1px solid #c8b89a;
+        border-radius: 4px; padding: 3px 8px; font-weight: bold;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(255,255,255,0.7); border: 1px solid #c8b89a;
+        border-radius: 6px; color: #3a2d1a; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">LEVEL <span id="hud-level">1</span></div>
+        <div class="hud-box">FOLDS <span id="hud-folds">0</span> / PAR <span id="hud-par">3</span></div>
+        <div class="hud-box">SCORE <span id="hud-score">0</span></div>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Tide Pool - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a1628; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;
+        pointer-events: none; color: rgba(255,255,255,0.9); font-size: 13px;
+      }
+      .hud-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(100,200,255,0.3); border-radius: 6px; padding: 4px 10px; }
+      .hud-box span { color: #64c8ff; font-weight: bold; }
+      #controls {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        background: rgba(0,0,0,0.6); pointer-events: all;
+      }
+      .add-btn {
+        padding: 6px 12px; border: none; border-radius: 6px; cursor: pointer;
+        font-family: inherit; font-size: 12px; font-weight: bold; color: #fff;
+      }
+      .btn-algae { background: #2d7a2d; }
+      .btn-zoo { background: #8a7a20; }
+      .btn-bacteria { background: #6b4226; }
+      .btn-predator { background: #8a2020; }
+      .slider-group { display: flex; align-items: center; gap: 6px; color: rgba(255,255,255,0.8); font-size: 12px; }
+      .slider-group input { width: 80px; }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(5,15,30,0.92);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 16px; z-index: 50; padding: 20px;
+      }
+      #overlay h1 { color: #64c8ff; font-size: clamp(20px,5vw,36px); text-align: center; }
+      #overlay p { color: rgba(255,255,255,0.75); font-size: clamp(11px,2vw,14px); max-width: 440px; text-align: center; line-height: 1.5; }
+      #overlay button {
+        padding: 12px 32px; background: #1a5a8a; border: 2px solid #64c8ff;
+        border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit;
+        cursor: pointer; transition: background 0.2s;
+      }
+      #overlay button:hover { background: #2a7ab0; }
+      .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.7); }
+      .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">CYCLES <span id="score-val">0</span></div>
+        <div class="hud-box">TIME <span id="time-val">90</span>s</div>
+        <div class="hud-box">STATUS <span id="status-val">Running</span></div>
+      </div>
+      <div id="controls">
+        <button class="add-btn btn-algae" id="btn-algae">+ Algae</button>
+        <button class="add-btn btn-zoo" id="btn-zoo">+ Zooplankton</button>
+        <button class="add-btn btn-bacteria" id="btn-bacteria">+ Bacteria</button>
+        <button class="add-btn btn-predator" id="btn-predator">+ Predator</button>
+        <div class="slider-group">
+          <label>Sunlight</label>
+          <input type="range" id="sunlight" min="0" max="2" step="0.1" value="1" />
+        </div>
+        <div class="slider-group">
+          <label>Minerals</label>
+          <button class="add-btn" id="btn-minerals" style="background:#445566;padding:4px 8px;">Add</button>
+        </div>
+      </div>
+    </div>
+    <button id="mute-btn">🔊</button>
+
+    <div id="overlay">
+      <h1>Tide Pool</h1>
+      <p>Balance a living ecosystem! Add species and adjust conditions to keep all 4 species alive. Each complete cycle where all coexist earns a point.</p>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#44bb44"></div>Algae</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ddbb22"></div>Zooplankton</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#8b5e3c"></div>Bacteria</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#cc3333"></div>Predator</div>
+      </div>
+      <button id="start-btn">Play</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

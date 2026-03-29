@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Doppler - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #050505; font-family: 'Courier New', monospace; color: #fff; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        display: flex; justify-content: space-between; padding: 6px 10px;
+        font-size: 12px; pointer-events: none; z-index: 10;
+        background: rgba(0,0,0,0.5);
+      }
+      .hud-item { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 3px 8px; }
+      .hud-val { color: #e5e7eb; font-weight: bold; }
+      #controls-hint {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        text-align: center; padding: 5px; font-size: 10px; color: rgba(255,255,255,0.3);
+        background: rgba(0,0,0,0.4); pointer-events: none;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 16px;
+        width: 32px; height: 32px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #vision-btn {
+        position: fixed; bottom: 28px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 10px;
+        padding: 4px 8px; cursor: pointer;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.92);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 50; gap: 14px; padding: 24px; text-align: center;
+      }
+      #overlay h1 { font-size: clamp(22px, 5vw, 36px); color: #e5e7eb; letter-spacing: 4px; }
+      #overlay p { font-size: clamp(11px, 2.5vw, 14px); color: #9ca3af; max-width: 400px; line-height: 1.6; }
+      #overlay button {
+        margin-top: 8px; padding: 10px 28px; background: #374151; border: 1px solid #6b7280;
+        border-radius: 8px; color: #fff; font-weight: bold; font-size: 16px;
+        cursor: pointer; font-family: inherit; letter-spacing: 2px;
+      }
+      #overlay button:hover { background: #4b5563; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">LEVEL <span class="hud-val" id="hud-level">1/5</span></div>
+        <div class="hud-item">ITEMS <span class="hud-val" id="hud-items">0/10</span></div>
+        <div class="hud-item">TIME <span class="hud-val" id="hud-time">3:00</span></div>
+        <div class="hud-item">SCORE <span class="hud-val" id="hud-score">0</span></div>
+      </div>
+      <canvas id="game-canvas"></canvas>
+      <div id="controls-hint">WASD / Arrow Keys to move | V = Vision mode | Touch: swipe to move</div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <button id="vision-btn" aria-label="Toggle vision">V: OFF</button>
+    <div id="overlay">
+      <h1>DOPPLER</h1>
+      <p>The world is almost dark. Navigate by sound alone.</p>
+      <p>A tone plays — walls reflect it with Doppler shift. Approaching = pitch rises. Receding = pitch falls. Stereo panning tells you left/right. Items ping every 2 seconds.</p>
+      <p>Press V anytime to toggle debug vision. Collect 10 items in 3 minutes across 5 levels.</p>
+      <button id="overlay-btn">LISTEN CAREFULLY</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

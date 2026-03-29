@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Stegano - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; font-family: 'Courier New', monospace; color: #fff; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
+      #hud {
+        width: 100%; display: flex; justify-content: space-between; align-items: center;
+        padding: 5px 10px; background: rgba(0,0,0,0.85); font-size: 12px; flex-wrap: wrap; gap: 4px;
+      }
+      .hud-item { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 3px 8px; }
+      .hud-val { color: #4ade80; font-weight: bold; }
+      #main-area { flex: 1; display: flex; width: 100%; min-height: 0; overflow: hidden; }
+      #canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 4px; }
+      #game-canvas { display: block; image-rendering: pixelated; max-width: 100%; max-height: 100%; }
+      #tool-panel {
+        width: 130px; background: rgba(0,0,0,0.8); padding: 6px;
+        display: flex; flex-direction: column; gap: 5px;
+        border-left: 1px solid rgba(255,255,255,0.1); overflow-y: auto;
+      }
+      .tool-section { border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 5px; }
+      .tool-title { color: #4ade80; font-size: 9px; margin-bottom: 4px; text-transform: uppercase; }
+      .tool-btn {
+        width: 100%; padding: 4px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.06); color: #fff; cursor: pointer; font-size: 9px;
+        font-family: 'Courier New', monospace; text-align: left; margin-bottom: 2px; white-space: nowrap;
+      }
+      .tool-btn:hover { background: rgba(74,222,128,0.15); }
+      .tool-btn.active { background: rgba(74,222,128,0.25); border-color: #4ade80; }
+      .slider-row { display: flex; align-items: center; gap: 4px; font-size: 9px; }
+      .slider-row input { flex: 1; height: 14px; accent-color: #4ade80; }
+      #bottom-bar {
+        width: 100%; padding: 6px 10px; background: rgba(0,0,0,0.8);
+        display: flex; gap: 6px; align-items: center;
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+      #answer-input {
+        flex: 1; padding: 5px 8px; border-radius: 4px; background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2); color: #fff; font-family: 'Courier New', monospace;
+        font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+      }
+      #answer-input:focus { outline: none; border-color: #4ade80; }
+      #submit-btn {
+        padding: 5px 14px; border-radius: 4px; background: #166534; border: 1px solid #4ade80;
+        color: #4ade80; cursor: pointer; font-size: 11px; font-family: 'Courier New', monospace;
+      }
+      #submit-btn:hover { background: #15803d; }
+      #feedback { font-size: 11px; color: #f87171; min-width: 60px; }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 16px;
+        width: 32px; height: 32px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 50; gap: 12px; padding: 24px; text-align: center;
+      }
+      #overlay h1 { font-size: clamp(22px, 5vw, 36px); color: #4ade80; }
+      #overlay p { font-size: clamp(11px, 2.5vw, 14px); color: #ccc; max-width: 420px; line-height: 1.6; }
+      #overlay button {
+        margin-top: 8px; padding: 10px 28px; background: #166534; border: 1px solid #4ade80;
+        border-radius: 8px; color: #4ade80; font-weight: bold; font-size: 16px;
+        cursor: pointer; font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">LEVEL <span class="hud-val" id="hud-level">1/8</span></div>
+        <div class="hud-item">TIME <span class="hud-val" id="hud-time">0s</span></div>
+        <div class="hud-item">HINT <span class="hud-val" id="hud-hint">Hidden in red LSB</span></div>
+        <div class="hud-item">SCORE <span class="hud-val" id="hud-score">0</span></div>
+      </div>
+      <div id="main-area">
+        <div id="canvas-wrap">
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="tool-panel">
+          <div class="tool-section">
+            <div class="tool-title">Channels</div>
+            <button class="tool-btn active" id="btn-normal">Normal</button>
+            <button class="tool-btn" id="btn-red">Red Only</button>
+            <button class="tool-btn" id="btn-green">Green Only</button>
+            <button class="tool-btn" id="btn-blue">Blue Only</button>
+          </div>
+          <div class="tool-section">
+            <div class="tool-title">Bit Plane</div>
+            <button class="tool-btn" id="btn-bit0">LSB (bit 0)</button>
+            <button class="tool-btn" id="btn-bit1">Bit 1</button>
+            <button class="tool-btn" id="btn-bit01">Bits 0-1</button>
+          </div>
+          <div class="tool-section">
+            <div class="tool-title">Filters</div>
+            <button class="tool-btn" id="btn-invert">Invert</button>
+            <button class="tool-btn" id="btn-threshold">Threshold</button>
+            <div class="slider-row">
+              <span>Contrast</span>
+              <input type="range" id="contrast-slider" min="50" max="400" value="100" step="10" />
+            </div>
+            <button class="tool-btn" id="btn-reset-filter">Reset View</button>
+          </div>
+        </div>
+      </div>
+      <div id="bottom-bar">
+        <input type="text" id="answer-input" placeholder="TYPE HIDDEN WORD..." maxlength="20" autocomplete="off" />
+        <button id="submit-btn">SUBMIT</button>
+        <span id="feedback"></span>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <div id="overlay">
+      <h1>Stegano</h1>
+      <p>A secret word is hidden in this image using steganography — encoded in the least significant bits of color channels.</p>
+      <p>Use the tools: isolate color channels, view bit planes, apply filters. The hidden pattern will reveal itself. Type the hidden word to advance.</p>
+      <p>Faster = more points!</p>
+      <button id="overlay-btn">Investigate</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

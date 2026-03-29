@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Schelling Sort - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0f0f1a; font-family: 'Courier New', monospace; color: #fff; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 8px 12px; background: rgba(0,0,0,0.6);
+        font-size: 12px; pointer-events: none; z-index: 10;
+        flex-wrap: wrap; gap: 4px;
+      }
+      .hud-item { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 3px 8px; }
+      .hud-val { color: #a78bfa; font-weight: bold; }
+      #canvas-wrap { position: relative; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; cursor: pointer; }
+      #controls {
+        position: absolute; bottom: 0; left: 0; width: 100%;
+        display: flex; justify-content: center; gap: 8px; padding: 8px;
+        background: rgba(0,0,0,0.6); z-index: 10;
+      }
+      .ctrl-btn {
+        padding: 6px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-size: 12px;
+        transition: background 0.15s;
+      }
+      .ctrl-btn:hover { background: rgba(255,255,255,0.2); }
+      .ctrl-btn.primary { background: rgba(167,139,250,0.3); border-color: #a78bfa; }
+      .ctrl-btn.primary:hover { background: rgba(167,139,250,0.5); }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 16px;
+        width: 32px; height: 32px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.85);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 50; gap: 12px; padding: 20px; text-align: center;
+      }
+      #overlay h1 { font-size: clamp(20px, 5vw, 32px); color: #a78bfa; }
+      #overlay p { font-size: clamp(11px, 2.5vw, 14px); color: #ccc; max-width: 400px; line-height: 1.5; }
+      #overlay button {
+        margin-top: 8px; padding: 10px 28px; background: #a78bfa; border: none;
+        border-radius: 8px; color: #0f0f1a; font-weight: bold; font-size: 16px;
+        cursor: pointer; font-family: inherit;
+      }
+      .score-big { font-size: clamp(28px, 6vw, 48px); color: #a78bfa; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">ROUND <span class="hud-val" id="hud-round">1/5</span></div>
+        <div class="hud-item">HAPPINESS <span class="hud-val" id="hud-happiness">0%</span></div>
+        <div class="hud-item">ENTROPY <span class="hud-val" id="hud-entropy">0.00</span></div>
+        <div class="hud-item">SCORE <span class="hud-val" id="hud-score">0</span></div>
+        <div class="hud-item">CENTERS <span class="hud-val" id="hud-centers">5</span></div>
+        <div class="hud-item">STEP <span class="hud-val" id="hud-step">-</span></div>
+      </div>
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div id="controls">
+        <button class="ctrl-btn" id="btn-reset">Reset Centers</button>
+        <button class="ctrl-btn primary" id="btn-play">Play Simulation</button>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <div id="overlay">
+      <h1>Schelling Sort</h1>
+      <p>A neighborhood of triangles (blue) and circles (orange) wants neighbors like themselves. Unhappy residents glow red and will move each simulation step.</p>
+      <p>Place up to 5 <strong style="color:#a78bfa">purple community centers</strong> (click cells) to foster integration, then press Play. Higher entropy = more mixed = better score!</p>
+      <button id="overlay-btn">Start Game</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

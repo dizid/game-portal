@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Topology - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a14; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; }
+      #toolbar {
+        display: flex; gap: 6px; padding: 6px 10px;
+        background: rgba(0,0,0,0.6); border-bottom: 1px solid #333;
+        flex-wrap: wrap;
+      }
+      .tool-btn {
+        background: rgba(100,100,200,0.2); border: 1px solid #446;
+        color: #aac; font-family: Courier New, monospace; font-size: 12px;
+        padding: 4px 10px; border-radius: 4px; cursor: pointer;
+        transition: background 0.1s;
+      }
+      .tool-btn.active { background: rgba(100,150,255,0.5); border-color: #88aaff; color: #fff; }
+      .tool-btn:hover { background: rgba(100,100,200,0.4); }
+      #canvas-row { display: flex; flex: 1; overflow: hidden; }
+      #game-canvas { display: block; touch-action: none; flex: 1; }
+      #info-panel {
+        width: 150px; min-width: 120px; background: rgba(0,0,0,0.5);
+        border-left: 1px solid #333; padding: 8px; font-size: 11px;
+        color: #aac; flex-shrink: 0; overflow-y: auto;
+      }
+      #info-panel h4 { color: #88aaff; margin-bottom: 4px; font-size: 12px; }
+      .topo-stat { margin-bottom: 6px; }
+      .topo-stat span { color: #fff; font-weight: bold; }
+      #hud-bar {
+        display: flex; justify-content: space-between; padding: 4px 10px;
+        background: rgba(0,0,0,0.5); border-bottom: 1px solid #333;
+        font-size: 12px; color: #aac;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(100,150,255,0.3);
+        border-radius: 6px; color: #aac; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      @media (max-width: 480px) {
+        #info-panel { width: 100px; min-width: 80px; font-size: 10px; }
+        .tool-btn { font-size: 10px; padding: 3px 6px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud-bar">
+        <span>LEVEL <b id="hud-level">1</b>/12</span>
+        <span>MOVES <b id="hud-moves">0</b></span>
+        <span>SCORE <b id="hud-score">0</b></span>
+      </div>
+      <div id="toolbar">
+        <button class="tool-btn active" id="btn-stretch" data-tool="stretch">STRETCH</button>
+        <button class="tool-btn" id="btn-punch" data-tool="punch">PUNCH HOLE</button>
+        <button class="tool-btn" id="btn-merge" data-tool="merge">MERGE</button>
+        <button class="tool-btn" id="btn-fill" data-tool="fill">FILL HOLE</button>
+        <button class="tool-btn" id="btn-check" data-tool="check">CHECK MATCH</button>
+      </div>
+      <div id="canvas-row">
+        <canvas id="game-canvas"></canvas>
+        <div id="info-panel">
+          <h4>SOURCE</h4>
+          <div class="topo-stat">Holes: <span id="src-holes">0</span></div>
+          <div class="topo-stat">Parts: <span id="src-parts">1</span></div>
+          <h4>TARGET</h4>
+          <div class="topo-stat">Holes: <span id="tgt-holes">0</span></div>
+          <div class="topo-stat">Parts: <span id="tgt-parts">1</span></div>
+          <h4>STATUS</h4>
+          <div id="topo-match" style="font-size:13px;font-weight:bold;color:#ff8888">NO MATCH</div>
+          <div style="margin-top:8px;color:#776;font-size:10px;" id="tool-hint">Select a tool, then click/drag the source shape.</div>
+        </div>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

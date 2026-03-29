@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Quorum - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #050a0f; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; cursor: crosshair; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        padding: 8px 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+        pointer-events: none; color: rgba(255,255,255,0.9); font-size: 12px;
+      }
+      .hud-box { background: rgba(0,0,0,0.6); border: 1px solid rgba(100,255,150,0.3); border-radius: 5px; padding: 3px 9px; }
+      .hud-box span { color: #88ffaa; font-weight: bold; }
+      #cooldown-bar-container {
+        position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+        width: 50%; max-width: 250px; pointer-events: none;
+      }
+      #cooldown-label { color: rgba(200,255,150,0.8); font-size: 11px; text-align: center; margin-bottom: 3px; }
+      #charges-display { display: flex; gap: 5px; justify-content: center; margin-bottom: 4px; }
+      .charge-dot { width: 12px; height: 12px; border-radius: 50%; background: #44ff88; border: 1px solid rgba(255,255,255,0.3); }
+      .charge-dot.empty { background: rgba(100,100,100,0.4); }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(5,10,20,0.93);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; z-index: 50; padding: 20px; text-align: center;
+      }
+      #overlay h1 { color: #88ffaa; font-size: clamp(20px,5vw,34px); }
+      #overlay p { color: rgba(255,255,255,0.75); font-size: clamp(11px,2vw,14px); max-width: 420px; line-height: 1.5; }
+      #overlay button {
+        padding: 12px 32px; background: #0a2a1a; border: 2px solid #88ffaa;
+        border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit; cursor: pointer;
+      }
+      #overlay button:hover { background: #1a4a2a; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">SCORE <span id="score-val">0</span></div>
+        <div class="hud-box">TIME <span id="time-val">180</span>s</div>
+        <div class="hud-box">BACTERIA <span id="bact-val">0</span></div>
+        <div class="hud-box">ACTIVATED <span id="act-val">0</span></div>
+      </div>
+      <div id="cooldown-bar-container">
+        <div id="cooldown-label">CATALYST CHARGES</div>
+        <div id="charges-display">
+          <div class="charge-dot" id="charge-0"></div>
+          <div class="charge-dot" id="charge-1"></div>
+          <div class="charge-dot" id="charge-2"></div>
+          <div class="charge-dot" id="charge-3"></div>
+          <div class="charge-dot" id="charge-4"></div>
+        </div>
+        <div id="burst-hint" style="color:rgba(200,255,150,0.6);font-size:10px;text-align:center;">Right-click = Burst Signal (10s cooldown)</div>
+      </div>
+    </div>
+    <button id="mute-btn">🔊</button>
+
+    <div id="overlay">
+      <h1>Quorum</h1>
+      <p>Bacteria communicate via signal molecules. Click near a bacterium to lower its activation barrier. When signal concentration is high enough AND barriers are low, bacteria activate for points. Beware phagocytes!</p>
+      <p style="font-size:11px;color:rgba(255,255,255,0.5);">Left-click: Catalyst (lower barrier) | Right-click: Burst Signal</p>
+      <button id="start-btn">Infect</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

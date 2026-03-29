@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Bit Rot - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        pointer-events: none; padding: 10px 14px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-size: 13px; color: #00ff88; user-select: none;
+        text-shadow: 0 0 6px #00ff88;
+      }
+      .hud-box {
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,136,0.3);
+        border-radius: 3px; padding: 3px 8px; font-weight: bold;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,136,0.3);
+        border-radius: 6px; color: #00ff88; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">ITEMS <span id="hud-items">0</span>/10</div>
+        <div class="hud-box">SCORE <span id="hud-score">0</span></div>
+        <div class="hud-box">DECAY <span id="hud-decay">0</span>%</div>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Echo Chamber - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a1a; font-family: 'Courier New', monospace; color: #fff; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
+      #hud {
+        width: 100%; display: flex; justify-content: space-between; align-items: center;
+        padding: 6px 10px; background: rgba(0,0,0,0.7); font-size: 12px; flex-wrap: wrap; gap: 4px;
+      }
+      .hud-item { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12); border-radius: 4px; padding: 3px 8px; }
+      .hud-val { color: #34d399; font-weight: bold; }
+      #canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; }
+      #game-canvas { display: block; touch-action: none; cursor: pointer; }
+      #info-bar {
+        width: 100%; padding: 6px 10px; background: rgba(0,0,0,0.6);
+        font-size: 11px; text-align: center; color: #aaa; min-height: 28px;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 16px;
+        width: 32px; height: 32px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.88);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 50; gap: 12px; padding: 24px; text-align: center;
+      }
+      #overlay h1 { font-size: clamp(22px, 5vw, 36px); color: #34d399; }
+      #overlay p { font-size: clamp(11px, 2.5vw, 14px); color: #ccc; max-width: 400px; line-height: 1.6; }
+      #overlay button {
+        margin-top: 8px; padding: 10px 28px; background: #34d399; border: none;
+        border-radius: 8px; color: #0a0a1a; font-weight: bold; font-size: 16px;
+        cursor: pointer; font-family: inherit;
+      }
+      .score-big { font-size: clamp(32px, 7vw, 56px); color: #34d399; font-weight: bold; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">TURN <span class="hud-val" id="hud-turn">0/15</span></div>
+        <div class="hud-item">TRUTH % <span class="hud-val" id="hud-truth">0%</span></div>
+        <div class="hud-item">SCORE <span class="hud-val" id="hud-score">0</span></div>
+        <div class="hud-item">PHASE <span class="hud-val" id="hud-phase">SEED</span></div>
+      </div>
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div id="info-bar" id="info">Click a node to seed truth. Then click agents to share their belief.</div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <div id="overlay">
+      <h1>Echo Chamber</h1>
+      <p>40 people are caught in a web of misinformation (red nodes). One node holds the truth (green).</p>
+      <p>Step 1: Click a node to plant the truth seed. Step 2: Each turn, click an agent to broadcast their belief to connected neighbors. Misinformation agents (marked with X) counter-broadcast. 15 turns total.</p>
+      <p>Goal: Get 70%+ of the network above truth threshold.</p>
+      <button id="overlay-btn">Start Game</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

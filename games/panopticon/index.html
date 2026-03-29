@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Panopticon - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #080d12; font-family: 'Courier New', monospace; color: #fff; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; }
+      #hud {
+        width: 100%; display: flex; justify-content: space-between; align-items: center;
+        padding: 5px 8px; background: rgba(0,0,0,0.85); font-size: 11px; flex-wrap: wrap; gap: 4px;
+      }
+      .hud-item { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 3px; padding: 2px 6px; }
+      .hud-val { color: #22d3ee; font-weight: bold; }
+      #main-area { flex: 1; display: flex; width: 100%; min-height: 0; }
+      #canvas-wrap { flex: 1; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; cursor: crosshair; }
+      #side-panel {
+        width: 110px; background: rgba(0,0,0,0.7); padding: 8px 6px;
+        display: flex; flex-direction: column; gap: 6px; overflow-y: auto; font-size: 11px;
+        border-left: 1px solid rgba(255,255,255,0.1);
+      }
+      .panel-section { border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; padding: 6px; }
+      .panel-title { color: #22d3ee; font-size: 10px; margin-bottom: 4px; text-transform: uppercase; }
+      .metric { display: flex; justify-content: space-between; font-size: 10px; margin: 2px 0; }
+      .metric-val { color: #22d3ee; font-weight: bold; }
+      .upgrade-btn {
+        width: 100%; padding: 3px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; font-size: 9px;
+        font-family: 'Courier New', monospace; text-align: center; margin-top: 2px;
+      }
+      .upgrade-btn:hover:not(:disabled) { background: rgba(34,211,238,0.2); }
+      .upgrade-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      #event-log { font-size: 9px; color: #6b7280; max-height: 80px; overflow-y: auto; }
+      .event-item { margin: 1px 0; }
+      #bottom-bar {
+        width: 100%; padding: 4px 8px; background: rgba(0,0,0,0.8);
+        display: flex; gap: 8px; align-items: center; font-size: 11px;
+        border-top: 1px solid rgba(255,255,255,0.1);
+      }
+      .ctrl-btn {
+        padding: 4px 10px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2);
+        background: rgba(255,255,255,0.07); color: #fff; cursor: pointer; font-size: 10px;
+        font-family: 'Courier New', monospace;
+      }
+      .ctrl-btn:hover { background: rgba(255,255,255,0.15); }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 16px;
+        width: 32px; height: 32px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        z-index: 50; gap: 12px; padding: 24px; text-align: center;
+      }
+      #overlay h1 { font-size: clamp(22px, 5vw, 36px); color: #22d3ee; }
+      #overlay p { font-size: clamp(11px, 2.5vw, 13px); color: #ccc; max-width: 400px; line-height: 1.5; }
+      #overlay button {
+        margin-top: 8px; padding: 10px 28px; background: #22d3ee; border: none;
+        border-radius: 8px; color: #080d12; font-weight: bold; font-size: 16px;
+        cursor: pointer; font-family: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">TURN <span class="hud-val" id="hud-turn">1/20</span></div>
+        <div class="hud-item">ORDER <span class="hud-val" id="hud-order">100</span></div>
+        <div class="hud-item">STABILITY <span class="hud-val" id="hud-stability">100</span></div>
+        <div class="hud-item">HAPPINESS <span class="hud-val" id="hud-happiness">100</span></div>
+        <div class="hud-item">CAMERAS <span class="hud-val" id="hud-cameras">0/5</span></div>
+        <div class="hud-item">SCORE <span class="hud-val" id="hud-score">0</span></div>
+      </div>
+      <div id="main-area">
+        <div id="canvas-wrap">
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="side-panel">
+          <div class="panel-section">
+            <div class="panel-title">Metrics</div>
+            <div class="metric"><span>Crime</span><span class="metric-val" id="metric-crime">0%</span></div>
+            <div class="metric"><span>Unrest</span><span class="metric-val" id="metric-unrest">0%</span></div>
+            <div class="metric"><span>Productivity</span><span class="metric-val" id="metric-prod">100%</span></div>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">Upgrades</div>
+            <button class="upgrade-btn" id="btn-hidden">Hidden Cam (-H)</button>
+            <button class="upgrade-btn" id="btn-informant">Informant (+O)</button>
+            <button class="upgrade-btn" id="btn-propaganda">Propaganda (+S)</button>
+          </div>
+          <div class="panel-section">
+            <div class="panel-title">Events</div>
+            <div id="event-log"></div>
+          </div>
+        </div>
+      </div>
+      <div id="bottom-bar">
+        <button class="ctrl-btn" id="btn-next-turn">Next Turn</button>
+        <span id="bottom-info" style="color:#6b7280;font-size:10px">Click city to place cameras (max 5). Each turn events may occur.</span>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <div id="overlay">
+      <h1>Panopticon</h1>
+      <p>You run a surveillance state. Place cameras (click on city cells) to reduce crime and boost productivity — but happiness suffers.</p>
+      <p>Every 3 turns: protest (camera zones refuse work), sabotage (camera destroyed), or underground movement (crime spike). Unlockable: hidden cameras, informants, propaganda. 20 turns total.</p>
+      <p>Score = Order + Stability + Happiness (balanced is best).</p>
+      <button id="overlay-btn">Deploy Cameras</button>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

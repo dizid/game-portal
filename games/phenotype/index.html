@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Phenotype - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #0d0d1a; font-family: 'Courier New', monospace; color: white; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; overflow: hidden; }
+      #game-canvas { display: none; }
+      #ui-layer {
+        width: 100%; max-width: 700px; height: 100%; display: flex; flex-direction: column;
+        padding: 8px; gap: 8px; overflow: hidden;
+      }
+      #top-bar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12px; flex-shrink: 0; }
+      .hud-box { background: rgba(0,0,0,0.5); border: 1px solid rgba(180,100,255,0.3); border-radius: 5px; padding: 3px 9px; }
+      .hud-box span { color: #cc88ff; font-weight: bold; }
+      #env-panel {
+        background: rgba(10,5,20,0.8); border: 1px solid rgba(180,100,255,0.4);
+        border-radius: 8px; padding: 10px 14px; flex-shrink: 0;
+      }
+      #env-panel h2 { color: #cc88ff; font-size: 13px; margin-bottom: 6px; }
+      #env-panel p { font-size: 12px; color: rgba(255,255,255,0.8); }
+      #env-traits { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; }
+      .trait-tag {
+        padding: 2px 8px; border-radius: 4px; font-size: 11px;
+        background: rgba(180,100,255,0.2); border: 1px solid rgba(180,100,255,0.5); color: #cc88ff;
+      }
+      #creatures-grid {
+        display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; flex-shrink: 0;
+      }
+      .creature-card {
+        background: rgba(15,8,30,0.9); border: 2px solid rgba(100,80,150,0.4);
+        border-radius: 8px; padding: 7px; cursor: pointer; transition: all 0.15s;
+        user-select: none; position: relative;
+      }
+      .creature-card:hover { border-color: rgba(180,100,255,0.7); background: rgba(25,15,50,0.9); }
+      .creature-card.selected { border-color: #cc88ff; background: rgba(40,20,70,0.9); }
+      .creature-card.dead { opacity: 0.4; cursor: default; border-color: rgba(100,60,60,0.5); }
+      .creature-card.survivor { border-color: #44ffaa; background: rgba(10,40,25,0.9); }
+      .card-name { font-size: 10px; color: rgba(255,255,255,0.7); margin-bottom: 5px; text-align: center; }
+      .trait-bar-row { display: flex; align-items: center; gap: 4px; margin-bottom: 2px; }
+      .trait-label { font-size: 9px; width: 22px; color: rgba(200,200,200,0.7); flex-shrink: 0; }
+      .trait-bar-bg { flex: 1; height: 5px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+      .trait-bar-fill { height: 100%; border-radius: 3px; }
+      .select-badge {
+        position: absolute; top: 4px; right: 4px; width: 16px; height: 16px;
+        background: #cc88ff; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 10px; color: #0d0d1a; font-weight: bold; display: none;
+      }
+      .creature-card.selected .select-badge { display: flex; }
+      #action-row { display: flex; gap: 10px; align-items: center; justify-content: center; flex-shrink: 0; }
+      #action-row button {
+        padding: 10px 24px; border-radius: 8px; border: 2px solid #cc88ff;
+        background: #1a0a2a; color: #fff; font-family: inherit; font-size: 14px; cursor: pointer;
+        transition: background 0.2s;
+      }
+      #action-row button:hover { background: #2a1a4a; }
+      #action-row button:disabled { opacity: 0.4; cursor: default; }
+      #result-log {
+        flex: 1; overflow-y: auto; background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(100,80,150,0.3); border-radius: 8px; padding: 8px;
+        font-size: 11px; color: rgba(200,200,200,0.8); min-height: 50px;
+      }
+      .log-line { margin-bottom: 3px; }
+      .log-survivor { color: #44ffaa; }
+      .log-dead { color: #ff6666; }
+      .log-event { color: #cc88ff; }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(5,5,20,0.93);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; z-index: 50; padding: 20px; text-align: center;
+      }
+      #overlay h1 { color: #cc88ff; font-size: clamp(20px,5vw,34px); }
+      #overlay p { color: rgba(255,255,255,0.75); font-size: clamp(11px,2vw,14px); max-width: 420px; line-height: 1.5; }
+      #overlay button {
+        padding: 12px 32px; background: #1a0a2a; border: 2px solid #cc88ff;
+        border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit; cursor: pointer;
+      }
+      #overlay button:hover { background: #2a1a4a; }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="ui-layer">
+        <div id="top-bar">
+          <div class="hud-box">GEN <span id="gen-val">1</span>/15</div>
+          <div class="hud-box">SCORE <span id="score-val">0</span></div>
+          <div class="hud-box">SURVIVORS <span id="surv-val">0</span></div>
+          <div class="hud-box">PHASE <span id="phase-val">Select</span></div>
+        </div>
+        <div id="env-panel">
+          <h2>Environment Challenge</h2>
+          <p id="env-desc">Select 4 creatures to survive this environment.</p>
+          <div id="env-traits"></div>
+        </div>
+        <div id="creatures-grid"></div>
+        <div id="action-row">
+          <button id="action-btn" disabled>Select 4 Creatures</button>
+        </div>
+        <div id="result-log"></div>
+      </div>
+    </div>
+    <button id="mute-btn">🔊</button>
+
+    <div id="overlay">
+      <h1>Phenotype</h1>
+      <p>Select 4 creatures each generation to survive the environment. Survivors breed and pass traits to offspring. 15 generations. Choose wisely!</p>
+      <p style="font-size:11px;color:rgba(255,255,255,0.5);">Traits: Speed, Armor, Camo, Size, Metabolism</p>
+      <button id="start-btn">Evolve</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

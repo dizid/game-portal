@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Enzyme - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #050510; font-family: 'Courier New', monospace; }
+      #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+      #game-canvas { display: block; touch-action: none; cursor: pointer; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        padding: 8px 14px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+        pointer-events: none; color: rgba(255,255,255,0.9); font-size: 12px;
+      }
+      .hud-box { background: rgba(0,0,0,0.6); border: 1px solid rgba(150,100,255,0.3); border-radius: 5px; padding: 3px 9px; }
+      .hud-box span { color: #cc88ff; font-weight: bold; }
+      #charges-ui {
+        position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+        display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none;
+      }
+      #charges-row { display: flex; gap: 6px; }
+      .charge-pip { width: 14px; height: 14px; border-radius: 50%; background: #cc88ff; border: 1px solid rgba(255,255,255,0.3); transition: all 0.2s; }
+      .charge-pip.empty { background: rgba(80,60,100,0.4); }
+      #charges-label { color: rgba(200,150,255,0.7); font-size: 10px; }
+      #wave-banner {
+        position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+        background: rgba(80,20,120,0.9); color: #fff; padding: 8px 20px;
+        border-radius: 8px; font-size: 14px; font-weight: bold; pointer-events: none;
+        z-index: 20; display: none; white-space: nowrap;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #overlay {
+        position: absolute; inset: 0; background: rgba(3,3,15,0.93);
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px; z-index: 50; padding: 20px; text-align: center;
+      }
+      #overlay h1 { color: #cc88ff; font-size: clamp(20px,5vw,34px); }
+      #overlay p { color: rgba(255,255,255,0.75); font-size: clamp(11px,2vw,14px); max-width: 420px; line-height: 1.5; }
+      #overlay button {
+        padding: 12px 32px; background: #1a0a2a; border: 2px solid #cc88ff;
+        border-radius: 8px; color: #fff; font-size: 16px; font-family: inherit; cursor: pointer;
+      }
+      #overlay button:hover { background: #2a1a4a; }
+      .legend { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+      .leg-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: rgba(255,255,255,0.7); }
+      .leg-dot { width: 10px; height: 10px; border-radius: 50%; }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-box">BONDS <span id="bonds-val">0</span></div>
+        <div class="hud-box">TIME <span id="time-val">90</span>s</div>
+        <div class="hud-box">WAVE <span id="wave-val">1</span></div>
+        <div class="hud-box">BEST <span id="best-val">0</span></div>
+      </div>
+      <div id="charges-ui">
+        <div id="charges-row">
+          <div class="charge-pip" id="pip-0"></div>
+          <div class="charge-pip" id="pip-1"></div>
+          <div class="charge-pip" id="pip-2"></div>
+          <div class="charge-pip" id="pip-3"></div>
+          <div class="charge-pip" id="pip-4"></div>
+        </div>
+        <div id="charges-label">CATALYST CHARGES (recharge 1 / 3s)</div>
+      </div>
+      <div id="wave-banner"></div>
+    </div>
+    <button id="mute-btn">🔊</button>
+
+    <div id="overlay">
+      <h1>Enzyme</h1>
+      <p>Complementary molecules bond when their activation barriers are low. Click near a molecule to lower its barrier for 2 seconds. Bond matching pairs (Red+Blue, Green+Yellow) to score!</p>
+      <div class="legend">
+        <div class="leg-item"><div class="leg-dot" style="background:#ff4444"></div>Red</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#4488ff"></div>Blue</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#44cc44"></div>Green</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#ffcc00"></div>Yellow</div>
+        <div class="leg-item"><div class="leg-dot" style="background:#888888"></div>Inhibitor</div>
+      </div>
+      <p style="font-size:11px;color:rgba(255,255,255,0.5);">Gray inhibitors block bonds — avoid them!</p>
+      <button id="start-btn">React</button>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

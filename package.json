@@ -9,7 +9,7 @@
   ],
   "scripts": {
     "dev": "turbo dev --filter=@game-portal/portal",
-    "build": "turbo build",
+    "build": "turbo build && node scripts/copy-games.mjs",
     "build:portal": "turbo build --filter=@game-portal/portal",
     "build:games": "turbo build --filter='./games/*'",
     "lint": "turbo lint",

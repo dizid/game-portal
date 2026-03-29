@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Color Mixing - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: #1a1a2e;
+        font-family: system-ui, sans-serif;
+        color: #fff;
+        overflow: hidden;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 12px;
+        gap: 10px;
+        overflow-y: auto;
+        max-width: 480px;
+        margin: 0 auto;
+      }
+
+      /* HUD */
+      #hud {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 8px 14px;
+        flex-shrink: 0;
+      }
+
+      .hud-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+      .hud-label { font-size: 10px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1px; }
+      .hud-value { font-size: 18px; font-weight: bold; color: #fff; }
+
+      /* Color circles */
+      #circles {
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .circle-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .color-circle {
+        width: 110px;
+        height: 110px;
+        border-radius: 50%;
+        border: 3px solid rgba(255,255,255,0.15);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        transition: background-color 0.1s;
+        flex-shrink: 0;
+      }
+
+      .circle-label {
+        font-size: 12px;
+        opacity: 0.6;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      /* Target color name */
+      #color-name {
+        font-size: 16px;
+        font-weight: bold;
+        color: #ffd700;
+        text-align: center;
+        flex-shrink: 0;
+        min-height: 20px;
+      }
+
+      /* Score feedback */
+      #score-feedback {
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        min-height: 40px;
+        flex-shrink: 0;
+        transition: color 0.3s;
+      }
+
+      /* RGB distance */
+      #distance-display {
+        font-size: 13px;
+        opacity: 0.5;
+        text-align: center;
+        flex-shrink: 0;
+        min-height: 16px;
+        font-family: monospace;
+      }
+
+      /* Sliders */
+      #sliders {
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+
+      .slider-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .slider-label {
+        width: 16px;
+        font-weight: bold;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .slider-label.r { color: #ff6666; }
+      .slider-label.g { color: #66ff88; }
+      .slider-label.b { color: #6699ff; }
+
+      input[type="range"] {
+        flex: 1;
+        height: 8px;
+        -webkit-appearance: none;
+        appearance: none;
+        border-radius: 4px;
+        outline: none;
+        cursor: pointer;
+      }
+
+      input[type="range"].r-slider {
+        background: linear-gradient(to right, #1a1a2e, #ff4444);
+      }
+      input[type="range"].g-slider {
+        background: linear-gradient(to right, #1a1a2e, #44ff66);
+      }
+      input[type="range"].b-slider {
+        background: linear-gradient(to right, #1a1a2e, #4466ff);
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        cursor: pointer;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        border: none;
+        cursor: pointer;
+      }
+
+      .slider-value {
+        width: 36px;
+        text-align: right;
+        font-size: 13px;
+        font-family: monospace;
+        opacity: 0.7;
+        flex-shrink: 0;
+      }
+
+      /* Submit button */
+      #submit-btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        cursor: pointer;
+        transition: transform 0.1s, opacity 0.1s;
+        flex-shrink: 0;
+        -webkit-tap-highlight-color: transparent;
+        letter-spacing: 0.5px;
+      }
+
+      #submit-btn:active { transform: scale(0.97); }
+      #submit-btn:disabled { opacity: 0.4; cursor: default; }
+
+      /* End screen */
+      #end-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(26,26,46,0.97);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 500;
+        text-align: center;
+        padding: 20px;
+      }
+
+      #end-screen.visible { display: flex; }
+
+      .end-title { font-size: 26px; font-weight: bold; color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.6); }
+      .end-score { font-size: 52px; font-weight: bold; }
+      .end-sub { font-size: 14px; opacity: 0.5; text-transform: uppercase; letter-spacing: 1.5px; }
+
+      .restart-btn {
+        padding: 13px 36px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Score history row */
+      #score-history {
+        width: 100%;
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .history-chip {
+        font-size: 11px;
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: rgba(255,255,255,0.08);
+        font-family: monospace;
+      }
+
+      /* Mute */
+      #mute-btn {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="hud">
+        <div class="hud-item">
+          <span class="hud-label">Round</span>
+          <span class="hud-value" id="round-display">1 / 10</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Score</span>
+          <span class="hud-value" id="score-display">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Best</span>
+          <span class="hud-value" id="best-display">0</span>
+        </div>
+      </div>
+
+      <div id="color-name">Match the target color</div>
+
+      <div id="circles">
+        <div class="circle-group">
+          <div class="color-circle" id="target-circle"></div>
+          <span class="circle-label">Target</span>
+        </div>
+        <div class="circle-group">
+          <div class="color-circle" id="mix-circle" style="background:#808080"></div>
+          <span class="circle-label">Your Mix</span>
+        </div>
+      </div>
+
+      <div id="score-feedback">&nbsp;</div>
+      <div id="distance-display">&nbsp;</div>
+
+      <div id="sliders">
+        <div class="slider-row">
+          <span class="slider-label r">R</span>
+          <input type="range" class="r-slider" id="slider-r" min="0" max="255" value="128" />
+          <span class="slider-value" id="val-r">128</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label g">G</span>
+          <input type="range" class="g-slider" id="slider-g" min="0" max="255" value="128" />
+          <span class="slider-value" id="val-g">128</span>
+        </div>
+        <div class="slider-row">
+          <span class="slider-label b">B</span>
+          <input type="range" class="b-slider" id="slider-b" min="0" max="255" value="128" />
+          <span class="slider-value" id="val-b">128</span>
+        </div>
+      </div>
+
+      <button id="submit-btn">Submit Color</button>
+
+      <div id="score-history"></div>
+    </div>
+
+    <div id="end-screen">
+      <div class="end-title">Game Complete!</div>
+      <div class="end-sub">Total Score (out of 1000)</div>
+      <div class="end-score" id="final-score">0</div>
+      <div class="end-sub" id="final-best-label"></div>
+      <button class="restart-btn" id="btn-restart">Play Again</button>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

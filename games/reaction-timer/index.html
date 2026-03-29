@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Reaction Timer - Game Portal</title>
+    <style>
+      *, *::before, *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #fff;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0;
+        cursor: pointer;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        /* Background color transitions between states */
+        transition: background-color 200ms ease;
+      }
+
+      #game-container.state-waiting  { background: #1a1a2e; }
+      #game-container.state-ready    { background: #0a4020; }
+      #game-container.state-early    { background: #4a1020; }
+      #game-container.state-result   { background: #1a1a2e; }
+      #game-container.state-done     { background: #1a1a2e; }
+
+      /* Center content */
+      #center-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+        pointer-events: none;
+        text-align: center;
+        padding: 0 20px;
+      }
+
+      #status-text {
+        font-size: clamp(20px, 5vw, 36px);
+        font-weight: 700;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.8);
+        transition: color 200ms;
+      }
+
+      #game-container.state-ready #status-text {
+        color: #00ff88;
+        text-shadow: 0 0 20px rgba(0,255,136,0.8);
+        animation: flash-in 100ms ease;
+      }
+
+      @keyframes flash-in {
+        from { transform: scale(1.2); opacity: 0.6; }
+        to   { transform: scale(1);   opacity: 1; }
+      }
+
+      #game-container.state-early #status-text {
+        color: #ff4466;
+        text-shadow: 0 0 20px rgba(255,68,102,0.8);
+      }
+
+      #result-ms {
+        font-size: clamp(48px, 14vw, 110px);
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -2px;
+        transition: color 200ms;
+      }
+
+      .ms-fast   { color: #00ff88; text-shadow: 0 0 30px rgba(0,255,136,0.6); }
+      .ms-ok     { color: #fbbf24; text-shadow: 0 0 24px rgba(251,191,36,0.5); }
+      .ms-slow   { color: #ff4466; text-shadow: 0 0 24px rgba(255,68,102,0.5); }
+      .ms-hidden { opacity: 0; }
+
+      /* Round history */
+      #history {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        pointer-events: none;
+      }
+
+      .round-dot {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.4);
+        transition: all 200ms;
+      }
+
+      .round-dot.fast   { background: rgba(0,255,136,0.2); border-color: #00ff88; color: #00ff88; }
+      .round-dot.ok     { background: rgba(251,191,36,0.2); border-color: #fbbf24; color: #fbbf24; }
+      .round-dot.slow   { background: rgba(255,68,102,0.2); border-color: #ff4466; color: #ff4466; }
+      .round-dot.current { border-style: dashed; border-color: rgba(255,255,255,0.4); animation: spin-border 1.5s linear infinite; }
+
+      @keyframes spin-border {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Sub text (round N/5, avg, etc) */
+      #sub-text {
+        font-size: clamp(12px, 3vw, 16px);
+        color: rgba(255,255,255,0.45);
+        pointer-events: none;
+        text-align: center;
+      }
+
+      /* Final screen overlay */
+      #final-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(13,13,26,0.94);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 10;
+        pointer-events: all;
+      }
+
+      #final-overlay.hidden { display: none; }
+
+      .final-title {
+        font-size: clamp(28px, 7vw, 50px);
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #a78bfa;
+        text-shadow: 0 0 24px rgba(167,139,250,0.7);
+      }
+
+      .final-stat {
+        font-size: clamp(14px, 3.5vw, 20px);
+        color: rgba(255,255,255,0.7);
+        text-align: center;
+      }
+
+      .final-stat strong {
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .history-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .hist-pill {
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .hist-pill.fast   { background: rgba(0,255,136,0.15); color: #00ff88; }
+      .hist-pill.ok     { background: rgba(251,191,36,0.15); color: #fbbf24; }
+      .hist-pill.slow   { background: rgba(255,68,102,0.15); color: #ff4466; }
+
+      .overlay-btn {
+        padding: 10px 30px;
+        border-radius: 8px;
+        border: none;
+        font-size: 15px;
+        font-weight: 700;
+        cursor: pointer;
+        letter-spacing: 1px;
+        background: #a78bfa;
+        color: #1a1a2e;
+        transition: transform 80ms;
+        pointer-events: all;
+      }
+
+      .overlay-btn:hover  { transform: scale(1.05); }
+      .overlay-btn:active { transform: scale(0.97); }
+
+      /* READY overlay (initial) */
+      #start-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(13,13,26,0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 10;
+      }
+
+      #start-overlay.hidden { display: none; }
+
+      .start-title {
+        font-size: clamp(28px, 7vw, 50px);
+        font-weight: 900;
+        letter-spacing: 2px;
+        color: #a78bfa;
+        text-shadow: 0 0 24px rgba(167,139,250,0.7);
+      }
+
+      .start-sub {
+        font-size: clamp(13px, 3vw, 17px);
+        color: rgba(255,255,255,0.6);
+        text-align: center;
+        padding: 0 20px;
+      }
+      #mute-btn {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container" class="state-waiting">
+      <div id="center-area">
+        <div id="history"></div>
+        <div id="result-ms" class="ms-hidden">---</div>
+        <div id="status-text">Tap anywhere to begin</div>
+        <div id="sub-text">5 rounds · fastest tap wins</div>
+      </div>
+
+      <!-- Initial READY overlay -->
+      <div id="start-overlay">
+        <div class="start-title">Reaction Timer</div>
+        <div class="start-sub">Wait for green, then tap as fast as you can!</div>
+        <div class="start-sub" style="font-size:12px;opacity:0.5">Best of 5 rounds</div>
+        <button class="overlay-btn" id="start-btn">Start</button>
+      </div>
+
+      <!-- Final results overlay -->
+      <div id="final-overlay" class="hidden"></div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

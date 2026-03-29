@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Sudoku - Game Portal</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #ffffff;
+        user-select: none;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 8px;
+      }
+
+      /* ── Overlays ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 30, 0.95);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 100;
+        padding: 24px;
+      }
+
+      .overlay.hidden {
+        display: none;
+      }
+
+      .overlay h1 {
+        font-size: clamp(28px, 7vw, 52px);
+        background: linear-gradient(135deg, #38bdf8, #818cf8);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 3px;
+        text-align: center;
+      }
+
+      .overlay p {
+        font-size: clamp(13px, 3vw, 15px);
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        max-width: 320px;
+        line-height: 1.6;
+      }
+
+      .overlay .big-stat {
+        font-size: clamp(22px, 5vw, 36px);
+        color: #38bdf8;
+        font-weight: bold;
+      }
+
+      .difficulty-btns {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      .diff-btn {
+        padding: 10px 20px;
+        border: 2px solid rgba(56, 189, 248, 0.5);
+        background: rgba(56, 189, 248, 0.1);
+        color: #38bdf8;
+        font-family: inherit;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        letter-spacing: 0.5px;
+      }
+
+      .diff-btn:hover {
+        background: rgba(56, 189, 248, 0.25);
+      }
+
+      .diff-btn:active {
+        transform: scale(0.95);
+      }
+
+      .diff-btn.easy { border-color: rgba(52, 211, 153, 0.6); color: #34d399; background: rgba(52, 211, 153, 0.1); }
+      .diff-btn.easy:hover { background: rgba(52, 211, 153, 0.2); }
+      .diff-btn.medium { border-color: rgba(251, 191, 36, 0.6); color: #fbbf24; background: rgba(251, 191, 36, 0.1); }
+      .diff-btn.medium:hover { background: rgba(251, 191, 36, 0.2); }
+      .diff-btn.hard { border-color: rgba(248, 113, 113, 0.6); color: #f87171; background: rgba(248, 113, 113, 0.1); }
+      .diff-btn.hard:hover { background: rgba(248, 113, 113, 0.2); }
+
+      .btn {
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #0369a1, #4f46e5);
+        border: none;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.1s;
+      }
+
+      .btn:hover { opacity: 0.85; }
+      .btn:active { transform: scale(0.96); }
+
+      /* ── HUD ── */
+      #hud {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 7px 12px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 10px;
+        margin-bottom: 8px;
+        font-size: 12px;
+        flex-shrink: 0;
+      }
+
+      #hud span {
+        color: #38bdf8;
+        font-weight: bold;
+      }
+
+      #hud .diff-label {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: rgba(56, 189, 248, 0.15);
+        color: #38bdf8;
+      }
+
+      /* ── Grid wrapper ── */
+      #grid-wrapper {
+        width: 100%;
+        max-width: 360px;
+        aspect-ratio: 1;
+        flex-shrink: 0;
+        margin-bottom: 8px;
+      }
+
+      /* ── Sudoku grid ── */
+      #sudoku-grid {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(9, 1fr);
+        border: 3px solid rgba(56, 189, 248, 0.7);
+        border-radius: 4px;
+        overflow: hidden;
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .sudoku-cell {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(14px, 4vw, 22px);
+        font-weight: 600;
+        cursor: pointer;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        transition: background 0.1s;
+        color: #e2e8f0;
+        min-width: 0;
+        min-height: 0;
+      }
+
+      /* Thick borders for 3x3 box boundaries */
+      .sudoku-cell:nth-child(3n) {
+        border-right: 2px solid rgba(56, 189, 248, 0.5);
+      }
+
+      .sudoku-cell:nth-child(9n) {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      /* Row boundaries — rows 3 and 6 get thick bottom border */
+      .sudoku-cell.row-end {
+        border-bottom: 2px solid rgba(56, 189, 248, 0.5);
+      }
+
+      .sudoku-cell.given {
+        color: #cbd5e1;
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .sudoku-cell.selected {
+        background: rgba(56, 189, 248, 0.25) !important;
+      }
+
+      .sudoku-cell.highlighted {
+        background: rgba(56, 189, 248, 0.08);
+      }
+
+      .sudoku-cell.error {
+        color: #f87171 !important;
+      }
+
+      .sudoku-cell.solved-highlight {
+        background: rgba(52, 211, 153, 0.15);
+      }
+
+      /* Notes display — grid of 3x3 small numbers inside the cell */
+      .cell-notes {
+        position: absolute;
+        inset: 1px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(3, 1fr);
+        gap: 0;
+        pointer-events: none;
+      }
+
+      .note-digit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(6px, 1.4vw, 9px);
+        color: rgba(56, 189, 248, 0.7);
+        font-weight: 400;
+      }
+
+      /* ── Number pad ── */
+      #numpad {
+        width: 100%;
+        max-width: 360px;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 4px;
+        margin-bottom: 8px;
+        flex-shrink: 0;
+      }
+
+      .num-btn {
+        aspect-ratio: 1;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        color: #e2e8f0;
+        font-family: inherit;
+        font-size: clamp(14px, 3.5vw, 18px);
+        font-weight: 600;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .num-btn:hover {
+        background: rgba(56, 189, 248, 0.2);
+        border-color: rgba(56, 189, 248, 0.5);
+      }
+
+      .num-btn:active {
+        transform: scale(0.92);
+      }
+
+      .num-btn.active-notes {
+        background: rgba(56, 189, 248, 0.25);
+        border-color: #38bdf8;
+        color: #38bdf8;
+      }
+
+      /* ── Controls row ── */
+      #controls {
+        width: 100%;
+        max-width: 360px;
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+      }
+
+      .ctrl-btn {
+        flex: 1;
+        min-width: 70px;
+        padding: 9px 8px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.8);
+        font-family: inherit;
+        font-size: 12px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+        text-align: center;
+      }
+
+      .ctrl-btn:hover {
+        background: rgba(255, 255, 255, 0.12);
+      }
+
+      .ctrl-btn:active {
+        transform: scale(0.95);
+      }
+
+      .ctrl-btn.notes-active {
+        background: rgba(56, 189, 248, 0.15);
+        border-color: rgba(56, 189, 248, 0.5);
+        color: #38bdf8;
+      }
+
+      .ctrl-btn.hint {
+        border-color: rgba(251, 191, 36, 0.4);
+        color: #fbbf24;
+      }
+
+      .ctrl-btn.hint:hover {
+        background: rgba(251, 191, 36, 0.1);
+      }
+
+      .ctrl-btn.new-game {
+        border-color: rgba(52, 211, 153, 0.4);
+        color: #34d399;
+      }
+
+      .ctrl-btn.new-game:hover {
+        background: rgba(52, 211, 153, 0.1);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- READY overlay -->
+      <div id="overlay-ready" class="overlay">
+        <h1>SUDOKU</h1>
+        <p>Fill in the 9x9 grid so every row, column and 3x3 box contains 1-9.</p>
+        <div class="difficulty-btns">
+          <button class="diff-btn easy" data-difficulty="easy">EASY</button>
+          <button class="diff-btn medium" data-difficulty="medium">MEDIUM</button>
+          <button class="diff-btn hard" data-difficulty="hard">HARD</button>
+        </div>
+      </div>
+
+      <!-- GAME OVER overlay (puzzle solved) -->
+      <div id="overlay-gameover" class="overlay hidden">
+        <h1>SOLVED!</h1>
+        <div class="big-stat" id="final-score-display">0 pts</div>
+        <p id="solve-time-text">Solved in 0:00</p>
+        <p id="best-score-text">Best: 0 pts</p>
+        <div class="difficulty-btns">
+          <button class="diff-btn easy" data-difficulty="easy">EASY</button>
+          <button class="diff-btn medium" data-difficulty="medium">MEDIUM</button>
+          <button class="diff-btn hard" data-difficulty="hard">HARD</button>
+        </div>
+      </div>
+
+      <!-- HUD -->
+      <div id="hud">
+        <div>TIME <span id="hud-timer">0:00</span></div>
+        <div class="diff-label" id="hud-diff">Easy</div>
+        <div>SCORE <span id="hud-score">0</span></div>
+      </div>
+
+      <!-- Grid -->
+      <div id="grid-wrapper">
+        <div id="sudoku-grid"></div>
+      </div>
+
+      <!-- Number pad -->
+      <div id="numpad">
+        <button class="num-btn" data-num="1">1</button>
+        <button class="num-btn" data-num="2">2</button>
+        <button class="num-btn" data-num="3">3</button>
+        <button class="num-btn" data-num="4">4</button>
+        <button class="num-btn" data-num="5">5</button>
+        <button class="num-btn" data-num="6">6</button>
+        <button class="num-btn" data-num="7">7</button>
+        <button class="num-btn" data-num="8">8</button>
+        <button class="num-btn" data-num="9">9</button>
+      </div>
+
+      <!-- Controls -->
+      <div id="controls">
+        <button class="ctrl-btn" id="btn-erase">ERASE</button>
+        <button class="ctrl-btn" id="btn-notes">NOTES</button>
+        <button class="ctrl-btn hint" id="btn-hint">HINT (-50)</button>
+        <button class="ctrl-btn new-game" id="btn-new">NEW</button>
+      </div>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

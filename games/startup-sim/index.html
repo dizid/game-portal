@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Startup Simulator - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%; height: 100%;
+        background: #1a1a2e;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #e0e0f0;
+        overflow-x: hidden;
+      }
+
+      #app {
+        min-height: 100vh;
+        padding: 12px;
+        max-width: 560px;
+        margin: 0 auto;
+        padding-bottom: 60px;
+      }
+
+      h1 {
+        text-align: center;
+        font-size: 1.35rem;
+        color: #8888ff;
+        text-shadow: 0 0 12px rgba(136,136,255,0.5);
+        margin-bottom: 8px;
+      }
+
+      /* ── Dashboard ── */
+      .dashboard {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 10px;
+      }
+
+      .dash-card {
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 10px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .dash-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.55;
+      }
+
+      .dash-value {
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      .dash-value.mrr     { color: #00ff88; }
+      .dash-value.users   { color: #8888ff; }
+      .dash-value.cash    { color: #ffd700; }
+      .dash-value.burn    { color: #ff6644; }
+      .dash-value.runway  { color: #44ccff; }
+      .dash-value.month   { color: #aaaaaa; }
+
+      .dash-card.cash-card { border-color: rgba(255,215,0,0.25); }
+      .dash-card.mrr-card  { border-color: rgba(0,255,136,0.25); }
+
+      /* ── Team card ── */
+      .team-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        font-size: 0.82rem;
+      }
+
+      .team-card h2 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.55;
+        margin-bottom: 8px;
+      }
+
+      .team-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 3px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+      }
+
+      .team-row:last-child { border-bottom: none; }
+      .team-count { font-weight: 700; color: #8888ff; }
+
+      /* ── Actions ── */
+      .actions-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+
+      .actions-card h2 {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        opacity: 0.55;
+        margin-bottom: 10px;
+      }
+
+      .action-group { margin-bottom: 12px; }
+      .action-group-title { font-size: 0.72rem; opacity: 0.5; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.4px; }
+
+      .hire-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 6px;
+        gap: 8px;
+        font-size: 0.85rem;
+      }
+
+      .hire-label { flex: 1; }
+      .hire-cost { font-size: 0.75rem; opacity: 0.5; }
+
+      .btn-sm {
+        padding: 5px 12px;
+        background: rgba(136,136,255,0.2);
+        border: 1px solid rgba(136,136,255,0.4);
+        border-radius: 6px;
+        color: #8888ff;
+        font-size: 0.82rem;
+        cursor: pointer;
+        white-space: nowrap;
+        transition: background 0.15s;
+      }
+
+      .btn-sm:hover { background: rgba(136,136,255,0.35); }
+      .btn-sm:disabled { opacity: 0.3; cursor: not-allowed; }
+
+      .marketing-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .marketing-row label { font-size: 0.83rem; min-width: 90px; }
+
+      input[type="range"] {
+        flex: 1;
+        -webkit-appearance: none;
+        appearance: none;
+        height: 6px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 3px;
+        outline: none;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: #ffd700;
+        cursor: pointer;
+      }
+
+      .marketing-value { font-size: 0.88rem; font-weight: 700; color: #ffd700; min-width: 52px; text-align: right; }
+
+      /* ── Feature build ── */
+      .feature-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        font-size: 0.83rem;
+      }
+
+      .feature-label { flex: 1; }
+      .feature-progress {
+        font-size: 0.72rem;
+        opacity: 0.55;
+        min-width: 60px;
+        text-align: right;
+      }
+
+      .features-in-progress {
+        margin-top: 6px;
+        font-size: 0.78rem;
+        opacity: 0.6;
+      }
+
+      .feature-item { padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+      .feature-item:last-child { border-bottom: none; }
+
+      /* ── Advance button ── */
+      .btn-advance {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #8888ff, #5555cc);
+        border: none; border-radius: 10px;
+        color: white; font-size: 1.05rem; font-weight: 700;
+        cursor: pointer;
+        margin-bottom: 10px;
+        transition: transform 0.1s, opacity 0.1s;
+      }
+
+      .btn-advance:active { transform: scale(0.97); }
+
+      /* ── Event card ── */
+      .event-card {
+        background: rgba(255,220,80,0.08);
+        border: 1px solid rgba(255,220,80,0.3);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 10px;
+        display: none;
+        animation: fadeIn 0.3s ease;
+      }
+
+      .event-card.visible { display: block; }
+      .event-card h2 { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; margin-bottom: 6px; }
+      .event-text { font-size: 0.92rem; }
+      .event-effect { font-size: 0.78rem; opacity: 0.7; margin-top: 4px; }
+
+      /* ── Log ── */
+      .log-card {
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 10px;
+        padding: 10px 12px;
+        margin-bottom: 10px;
+        max-height: 140px;
+        overflow-y: auto;
+      }
+
+      .log-card h2 { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.5; margin-bottom: 6px; }
+      .log-entry { font-size: 0.78rem; opacity: 0.65; padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
+      .log-entry:last-child { border-bottom: none; }
+      .log-entry .mo { color: #8888ff; font-weight: 600; margin-right: 4px; }
+
+      /* ── Game over / win ── */
+      #end-screen {
+        display: none;
+        text-align: center;
+        padding: 30px 20px;
+      }
+
+      #end-screen.visible { display: block; }
+      #end-screen h2 { font-size: 1.8rem; margin-bottom: 10px; }
+      .end-subtitle { font-size: 0.95rem; opacity: 0.7; margin-bottom: 10px; }
+      .end-mrr { font-size: 2rem; font-weight: 800; color: #00ff88; margin-bottom: 8px; }
+      .end-score { font-size: 1.1rem; color: #ffd700; margin-bottom: 20px; }
+
+      .btn-restart {
+        padding: 14px 32px;
+        background: linear-gradient(135deg, #8888ff, #5555cc);
+        border: none; border-radius: 10px;
+        color: white; font-size: 1.05rem; font-weight: 700;
+        cursor: pointer;
+      }
+
+      @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white;
+        font-size: 18px; width: 36px; height: 36px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <div id="app">
+      <h1>🚀 Startup Simulator</h1>
+
+      <div class="dashboard">
+        <div class="dash-card mrr-card">
+          <span class="dash-label">Monthly MRR</span>
+          <span class="dash-value mrr" id="d-mrr">$0</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Users</span>
+          <span class="dash-value users" id="d-users">0</span>
+        </div>
+        <div class="dash-card cash-card">
+          <span class="dash-label">Cash</span>
+          <span class="dash-value cash" id="d-cash">$10,000</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Burn / mo</span>
+          <span class="dash-value burn" id="d-burn">$0</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Runway</span>
+          <span class="dash-value runway" id="d-runway">∞</span>
+        </div>
+        <div class="dash-card">
+          <span class="dash-label">Month</span>
+          <span class="dash-value month" id="d-month">1 / 36</span>
+        </div>
+      </div>
+
+      <div class="team-card" id="team-card" style="display:none">
+        <h2>Team</h2>
+        <div class="team-row"><span>Developers</span><span class="team-count" id="team-devs">0</span></div>
+        <div class="team-row"><span>Marketers</span><span class="team-count" id="team-mkt">0</span></div>
+        <div class="team-row"><span>Sales</span><span class="team-count" id="team-sales">0</span></div>
+      </div>
+
+      <div class="event-card" id="event-card">
+        <h2>📰 Event</h2>
+        <div class="event-text" id="event-text"></div>
+        <div class="event-effect" id="event-effect"></div>
+      </div>
+
+      <div class="actions-card" id="actions-card">
+        <h2>This Month's Actions</h2>
+
+        <div class="action-group">
+          <div class="action-group-title">Hire</div>
+          <div class="hire-row">
+            <span class="hire-label">Developer</span>
+            <span class="hire-cost">$5K/mo salary</span>
+            <button class="btn-sm" id="hire-dev">Hire ($5K)</button>
+          </div>
+          <div class="hire-row">
+            <span class="hire-label">Marketer</span>
+            <span class="hire-cost">$4K/mo salary</span>
+            <button class="btn-sm" id="hire-mkt">Hire ($4K)</button>
+          </div>
+          <div class="hire-row">
+            <span class="hire-label">Sales Rep</span>
+            <span class="hire-cost">$4.5K/mo salary</span>
+            <button class="btn-sm" id="hire-sales">Hire ($4.5K)</button>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <div class="action-group-title">Marketing Spend</div>
+          <div class="marketing-row">
+            <label>Budget/mo</label>
+            <input type="range" id="mkt-slider" min="0" max="5000" step="100" value="0" />
+            <span class="marketing-value" id="mkt-value">$0</span>
+          </div>
+        </div>
+
+        <div class="action-group">
+          <div class="action-group-title">Build Feature</div>
+          <div class="feature-row">
+            <span class="feature-label" id="feature-name">Core Dashboard</span>
+            <span class="feature-progress" id="feature-progress">1-2 months</span>
+            <button class="btn-sm" id="build-feature-btn">Start Build</button>
+          </div>
+          <div class="features-in-progress" id="features-in-progress"></div>
+        </div>
+      </div>
+
+      <button class="btn-advance" id="advance-btn">Advance Month ➜</button>
+
+      <div class="log-card">
+        <h2>Activity Log</h2>
+        <div id="log-entries"></div>
+      </div>
+
+      <div id="end-screen">
+        <h2 id="end-title">💀 Bankrupt</h2>
+        <div class="end-subtitle" id="end-subtitle">You ran out of cash</div>
+        <div class="end-mrr" id="end-mrr">$0 MRR</div>
+        <div class="end-score" id="end-score">Score: 0</div>
+        <button class="btn-restart" id="restart-btn">Try Again</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

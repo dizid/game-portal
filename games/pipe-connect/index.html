@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Pipe Connect - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 100%; height: 100%;
+        background: #1a1a2e;
+        font-family: 'Courier New', Courier, monospace;
+        color: #e0e0f0;
+        overflow: hidden;
+      }
+      #game-container {
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+      #hud {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        padding: 6px 12px;
+        background: rgba(0,0,0,0.4);
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.1);
+      }
+      .hud-item {
+        font-size: 13px;
+        letter-spacing: 0.5px;
+      }
+      .hud-item span { color: #64b4ff; font-weight: bold; }
+      #canvas-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #game-canvas {
+        display: block;
+        touch-action: none;
+        cursor: pointer;
+        border-radius: 8px;
+      }
+      #msg {
+        font-size: 14px;
+        color: rgba(255,255,255,0.6);
+        letter-spacing: 0.5px;
+        min-height: 20px;
+        text-align: center;
+      }
+      #mute-btn {
+        position: fixed;
+        top: 8px; right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px; height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">LEVEL <span id="level-value">1</span></div>
+        <div class="hud-item">SCORE <span id="score-value">0</span></div>
+        <div class="hud-item">TIME <span id="timer-value">0</span>s</div>
+        <div class="hud-item">BEST <span id="high-score-value">0</span></div>
+      </div>
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+      <div id="msg">Tap pipes to rotate — connect source to drain</div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

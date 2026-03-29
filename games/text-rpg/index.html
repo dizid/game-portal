@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Text RPG - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: #1a1a2e;
+        font-family: 'Georgia', 'Times New Roman', serif;
+        color: #e8e0d0;
+        overflow: hidden;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      /* Stats bar */
+      #stats-bar {
+        padding: 8px 12px;
+        background: rgba(0,0,0,0.4);
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+        flex-shrink: 0;
+      }
+
+      .stat-chip {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 6px;
+        padding: 3px 8px;
+        font-size: 12px;
+        font-family: system-ui, sans-serif;
+      }
+
+      .stat-chip.hp { border-color: rgba(255,80,80,0.4); }
+      .stat-chip.gold { border-color: rgba(255,215,0,0.4); }
+      .stat-chip.atk { border-color: rgba(255,120,0,0.4); }
+      .stat-chip.def { border-color: rgba(80,160,255,0.4); }
+
+      .stat-value { font-weight: bold; }
+      .stat-value.hp-val { color: #ff6666; }
+      .stat-value.gold-val { color: #ffd700; }
+      .stat-value.atk-val { color: #ff9900; }
+      .stat-value.def-val { color: #66aaff; }
+
+      #items-display {
+        font-size: 11px;
+        opacity: 0.5;
+        font-family: system-ui, sans-serif;
+        margin-left: auto;
+      }
+
+      /* Story area */
+      #story-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        line-height: 1.7;
+        scroll-behavior: smooth;
+      }
+
+      #story-text {
+        font-size: 15px;
+        white-space: pre-wrap;
+        min-height: 60px;
+      }
+
+      /* Choices */
+      #choices {
+        padding: 10px 12px 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        flex-shrink: 0;
+        background: rgba(0,0,0,0.3);
+        border-top: 1px solid rgba(255,255,255,0.06);
+        max-height: 45%;
+        overflow-y: auto;
+      }
+
+      .choice-btn {
+        width: 100%;
+        padding: 10px 14px;
+        text-align: left;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        color: #e8e0d0;
+        font-size: 14px;
+        font-family: 'Georgia', serif;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s;
+        -webkit-tap-highlight-color: transparent;
+        line-height: 1.4;
+      }
+
+      .choice-btn:active { background: rgba(255,255,255,0.12); }
+      .choice-btn.danger { border-color: rgba(255,80,80,0.35); }
+      .choice-btn.reward { border-color: rgba(255,215,0,0.35); }
+      .choice-btn:disabled { opacity: 0.3; cursor: default; }
+
+      /* Combat log */
+      #combat-log {
+        padding: 0 16px 8px;
+        font-size: 12px;
+        font-family: system-ui, sans-serif;
+        opacity: 0.6;
+        line-height: 1.5;
+        max-height: 60px;
+        overflow-y: auto;
+        flex-shrink: 0;
+      }
+
+      /* Cursor blink */
+      .cursor {
+        display: inline-block;
+        width: 2px;
+        height: 1em;
+        background: #e8e0d0;
+        margin-left: 1px;
+        vertical-align: text-bottom;
+        animation: blink 1s step-end infinite;
+      }
+
+      @keyframes blink {
+        50% { opacity: 0; }
+      }
+
+      /* Game over / win screen */
+      #end-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(26,26,46,0.96);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        z-index: 500;
+        padding: 20px;
+        text-align: center;
+      }
+
+      #end-screen.visible { display: flex; }
+
+      .end-title { font-size: 28px; font-weight: bold; }
+      .end-title.win { color: #ffd700; text-shadow: 0 0 20px rgba(255,215,0,0.6); }
+      .end-title.lose { color: #ff4444; }
+      .end-score { font-size: 42px; font-weight: bold; color: #fff; }
+      .end-label { font-size: 13px; opacity: 0.5; font-family: system-ui, sans-serif; text-transform: uppercase; letter-spacing: 1.5px; }
+
+      .restart-btn {
+        padding: 12px 32px;
+        background: linear-gradient(135deg, #ffd700, #ff9500);
+        border: none;
+        border-radius: 8px;
+        color: #1a1a2e;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Mute */
+      #mute-btn {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="stats-bar">
+        <div class="stat-chip hp">HP <span class="stat-value hp-val" id="hp-display">100</span></div>
+        <div class="stat-chip gold">Gold <span class="stat-value gold-val" id="gold-display">0</span></div>
+        <div class="stat-chip atk">ATK <span class="stat-value atk-val" id="atk-display">5</span></div>
+        <div class="stat-chip def">DEF <span class="stat-value def-val" id="def-display">3</span></div>
+        <div id="items-display">No items</div>
+      </div>
+
+      <div id="story-area">
+        <div id="story-text"></div>
+      </div>
+
+      <div id="combat-log"></div>
+
+      <div id="choices"></div>
+    </div>
+
+    <div id="end-screen">
+      <div class="end-title" id="end-title">Game Over</div>
+      <div class="end-label">Final Score</div>
+      <div class="end-score" id="end-score">0</div>
+      <div class="end-label" id="end-subtitle"></div>
+      <button class="restart-btn" id="btn-restart">Play Again</button>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

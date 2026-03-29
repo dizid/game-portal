@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Hangman - Game Portal</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: 'Courier New', Courier, monospace;
+        color: #fff;
+      }
+
+      #game-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 8px;
+        gap: 6px;
+        overflow: hidden;
+      }
+
+      /* HUD row */
+      #hud {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.9);
+        flex-shrink: 0;
+      }
+
+      .hud-pill {
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(100, 200, 255, 0.3);
+        border-radius: 6px;
+        padding: 3px 10px;
+        letter-spacing: 0.5px;
+      }
+
+      .hud-pill span {
+        color: #64c8ff;
+        font-weight: bold;
+      }
+
+      /* Category badge */
+      #category-badge {
+        font-size: 11px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        flex-shrink: 0;
+      }
+
+      /* Canvas area */
+      #canvas-wrap {
+        flex-shrink: 0;
+      }
+
+      #hangman-canvas {
+        display: block;
+      }
+
+      /* Word display */
+      #word-display {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        justify-content: center;
+        max-width: 480px;
+        flex-shrink: 0;
+      }
+
+      .letter-box {
+        width: 26px;
+        height: 32px;
+        border-bottom: 2px solid rgba(255, 255, 255, 0.6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: #fff;
+        transition: color 0.2s;
+      }
+
+      /* On-screen keyboard */
+      #keyboard {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        align-items: center;
+        width: 100%;
+        max-width: 500px;
+        flex-shrink: 0;
+      }
+
+      .key-row {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+      }
+
+      .key-btn {
+        width: 30px;
+        height: 34px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 5px;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: background 0.15s, color 0.15s, opacity 0.15s;
+        touch-action: manipulation;
+        user-select: none;
+      }
+
+      .key-btn:hover:not(:disabled) {
+        background: rgba(100, 200, 255, 0.2);
+      }
+
+      .key-btn.correct {
+        background: rgba(0, 200, 100, 0.35);
+        border-color: #00c864;
+        color: #00ff88;
+      }
+
+      .key-btn.wrong {
+        background: rgba(220, 50, 50, 0.25);
+        border-color: rgba(220, 50, 50, 0.5);
+        color: rgba(255, 80, 80, 0.7);
+        opacity: 0.5;
+      }
+
+      .key-btn:disabled {
+        cursor: default;
+        pointer-events: none;
+      }
+
+      /* Overlay screens */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 20, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 10;
+      }
+
+      .overlay.hidden {
+        display: none;
+      }
+
+      .overlay h1 {
+        font-size: 28px;
+        color: #64c8ff;
+        text-shadow: 0 0 16px rgba(100, 200, 255, 0.8);
+        letter-spacing: 2px;
+      }
+
+      .overlay p {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 14px;
+        text-align: center;
+        max-width: 280px;
+        line-height: 1.5;
+      }
+
+      .overlay .big-word {
+        font-size: 22px;
+        color: #ff6b6b;
+        letter-spacing: 3px;
+      }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #64c8ff 0%, #0088cc 100%);
+        color: #000;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 32px;
+        font-size: 16px;
+        font-weight: bold;
+        font-family: 'Courier New', Courier, monospace;
+        cursor: pointer;
+        letter-spacing: 1px;
+        touch-action: manipulation;
+      }
+
+      .btn-primary:hover {
+        opacity: 0.9;
+      }
+
+      #streak-display {
+        font-size: 13px;
+        color: rgba(255,255,255,0.6);
+      }
+
+      #streak-display span {
+        color: #ffd700;
+        font-weight: bold;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-pill">SCORE <span id="score-value">0</span></div>
+        <div id="category-badge">—</div>
+        <div class="hud-pill">BEST <span id="high-score-value">0</span></div>
+      </div>
+
+      <div id="canvas-wrap">
+        <canvas id="hangman-canvas"></canvas>
+      </div>
+
+      <div id="word-display"></div>
+
+      <div id="streak-display">Streak <span id="streak-value">0</span></div>
+
+      <div id="keyboard"></div>
+    </div>
+
+    <!-- READY overlay -->
+    <div class="overlay" id="overlay-ready">
+      <h1>HANGMAN</h1>
+      <p>Guess the hidden word letter by letter. 6 wrong guesses and it's over.</p>
+      <button class="btn-primary" id="btn-start">PLAY</button>
+    </div>
+
+    <!-- WORD SOLVED overlay (brief flash) -->
+    <div class="overlay hidden" id="overlay-solved">
+      <h1 style="color:#00ff88">CORRECT!</h1>
+      <p id="solved-msg"></p>
+      <button class="btn-primary" id="btn-next">NEXT WORD</button>
+    </div>
+
+    <!-- GAME OVER overlay -->
+    <div class="overlay hidden" id="overlay-gameover">
+      <h1 style="color:#ff6b6b">GAME OVER</h1>
+      <p>The word was:</p>
+      <div class="big-word" id="reveal-word"></div>
+      <p id="final-score-msg"></p>
+      <button class="btn-primary" id="btn-restart">PLAY AGAIN</button>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

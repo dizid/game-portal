@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Wordle - Game Portal</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        background: #1a1a2e;
+        color: #ffffff;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        overflow: hidden;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 8px 8px 4px;
+      }
+
+      /* ── Header ── */
+      #header {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding-bottom: 6px;
+        border-bottom: 1px solid rgba(255,255,255,0.15);
+        margin-bottom: 8px;
+        position: relative;
+      }
+
+      #header h1 {
+        font-size: clamp(1.1rem, 4vw, 1.5rem);
+        font-weight: 800;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: #fff;
+      }
+
+      #daily-badge {
+        position: absolute;
+        right: 0;
+        font-size: 0.65rem;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 4px;
+        padding: 2px 6px;
+        color: rgba(255,255,255,0.7);
+        letter-spacing: 0.05em;
+      }
+
+      /* ── Grid ── */
+      #grid-container {
+        width: 100%;
+        max-width: 350px;
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 8px;
+      }
+
+      .grid-row {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+      }
+
+      .tile {
+        aspect-ratio: 1;
+        border: 2px solid rgba(255,255,255,0.2);
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: clamp(1.2rem, 4vw, 1.8rem);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        color: #fff;
+        background: transparent;
+        position: relative;
+        transition: border-color 0.1s;
+        /* perspective for flip */
+        perspective: 250px;
+      }
+
+      /* Tile has a letter typed */
+      .tile.filled {
+        border-color: rgba(255,255,255,0.5);
+        animation: tile-pop 0.1s ease;
+      }
+
+      @keyframes tile-pop {
+        0%   { transform: scale(1); }
+        50%  { transform: scale(1.12); }
+        100% { transform: scale(1); }
+      }
+
+      /* Flip reveal container */
+      .tile-inner {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        inset: 0;
+        transform-style: preserve-3d;
+        transition: transform 0.45s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 2px;
+      }
+
+      .tile.flipping .tile-inner {
+        transform: rotateX(180deg);
+      }
+
+      .tile-front,
+      .tile-back {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        backface-visibility: hidden;
+        -webkit-backface-visibility: hidden;
+        border-radius: 2px;
+      }
+
+      .tile-back {
+        transform: rotateX(180deg);
+      }
+
+      /* Result colors (applied to .tile-back) */
+      .tile-back.correct  { background: #538d4e; }
+      .tile-back.present  { background: #b59f3b; }
+      .tile-back.absent   { background: #3a3a3c; }
+
+      /* After flip settles, apply border color to tile */
+      .tile.revealed.correct  { border-color: #538d4e; }
+      .tile.revealed.present  { border-color: #b59f3b; }
+      .tile.revealed.absent   { border-color: #3a3a3c; }
+
+      /* Shake animation for invalid word */
+      .grid-row.shake {
+        animation: shake 0.5s ease;
+      }
+
+      @keyframes shake {
+        0%,100% { transform: translateX(0); }
+        10%,50%,90% { transform: translateX(-6px); }
+        30%,70%  { transform: translateX(6px); }
+      }
+
+      /* ── Toast messages ── */
+      #toast-container {
+        position: fixed;
+        top: 60px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 100;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        pointer-events: none;
+      }
+
+      .toast {
+        background: rgba(255,255,255,0.95);
+        color: #1a1a2e;
+        font-weight: 700;
+        font-size: 0.85rem;
+        padding: 8px 16px;
+        border-radius: 6px;
+        animation: toast-in 0.2s ease, toast-out 0.3s ease 1.5s forwards;
+        letter-spacing: 0.05em;
+      }
+
+      @keyframes toast-in {
+        from { opacity: 0; transform: translateY(-8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes toast-out {
+        to { opacity: 0; transform: translateY(-8px); }
+      }
+
+      /* ── Keyboard ── */
+      #keyboard {
+        width: 100%;
+        max-width: 500px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: center;
+      }
+
+      .kb-row {
+        display: flex;
+        gap: 5px;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .kb-key {
+        height: clamp(40px, 8vw, 56px);
+        min-width: clamp(26px, 6vw, 42px);
+        padding: 0 4px;
+        border: none;
+        border-radius: 4px;
+        background: #818384;
+        color: #fff;
+        font-weight: 700;
+        font-size: clamp(0.7rem, 2.5vw, 0.95rem);
+        text-transform: uppercase;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: 0.02em;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.2s, transform 0.05s;
+        flex-shrink: 0;
+      }
+
+      .kb-key:active {
+        transform: scale(0.93);
+      }
+
+      .kb-key.wide {
+        min-width: clamp(46px, 10vw, 66px);
+        font-size: clamp(0.6rem, 2vw, 0.75rem);
+      }
+
+      .kb-key.correct  { background: #538d4e !important; }
+      .kb-key.present  { background: #b59f3b !important; }
+      .kb-key.absent   { background: #3a3a3c !important; }
+
+      /* ── Overlay (READY / GAME_OVER) ── */
+      #overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(26, 26, 46, 0.88);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        backdrop-filter: blur(4px);
+      }
+
+      #overlay.hidden {
+        display: none;
+      }
+
+      .overlay-card {
+        background: #16213e;
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 16px;
+        padding: 28px 32px;
+        text-align: center;
+        max-width: 340px;
+        width: 90%;
+      }
+
+      .overlay-card h2 {
+        font-size: 1.6rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        color: #fff;
+      }
+
+      .overlay-card p {
+        color: rgba(255,255,255,0.7);
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+        line-height: 1.4;
+      }
+
+      .overlay-card .answer-reveal {
+        font-size: 1.2rem;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        color: #538d4e;
+        margin-bottom: 16px;
+        text-transform: uppercase;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 12px 28px;
+        background: #538d4e;
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.95rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin: 4px;
+        transition: background 0.15s, transform 0.05s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .btn:hover { background: #6aad65; }
+      .btn:active { transform: scale(0.96); }
+
+      .btn-secondary {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.25);
+      }
+      .btn-secondary:hover { background: rgba(255,255,255,0.18); }
+
+      #share-result {
+        font-family: monospace;
+        font-size: 1rem;
+        letter-spacing: 0.1em;
+        line-height: 1.6;
+        background: rgba(0,0,0,0.3);
+        border-radius: 6px;
+        padding: 10px;
+        margin: 10px 0;
+        color: #fff;
+        white-space: pre;
+      }
+
+      .score-line {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #b59f3b;
+        margin-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="header">
+        <h1>Wordle</h1>
+        <span id="daily-badge">DAILY</span>
+      </div>
+
+      <div id="grid-container"></div>
+
+      <div id="keyboard"></div>
+    </div>
+
+    <div id="toast-container"></div>
+
+    <div id="overlay">
+      <div class="overlay-card" id="overlay-card">
+        <!-- Content injected by JS -->
+      </div>
+    </div>
+
+    <style>
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

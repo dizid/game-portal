@@ -68,6 +68,23 @@
         color: #00ff88;
         font-weight: bold;
       }
+      #mute-btn {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
     </style>
   </head>
   <body>
@@ -78,6 +95,7 @@
         <div id="hud-high-score">BEST <span id="high-score-value">0</span></div>
       </div>
     </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

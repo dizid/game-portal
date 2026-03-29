@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Galaga - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { width: 100%; height: 100%; overflow: hidden; background: #1a1a2e; }
+      #game-container {
+        position: relative; width: 100%; height: 100%;
+        display: flex; align-items: center; justify-content: center;
+      }
+      #game-canvas { display: block; touch-action: none; }
+      #hud {
+        position: absolute; top: 0; left: 0; width: 100%;
+        pointer-events: none; padding: 10px 16px;
+        display: flex; justify-content: space-between; align-items: center;
+        font-family: 'Courier New', monospace; font-size: 13px;
+        color: rgba(255,255,255,0.9); user-select: none;
+      }
+      .hud-pill {
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(80,255,180,0.3);
+        border-radius: 6px; padding: 4px 10px;
+        text-shadow: 0 0 8px rgba(80,255,180,0.7);
+      }
+      .hud-pill span { color: #50ffb4; font-weight: bold; }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+      <div id="hud">
+        <div class="hud-pill">SCORE <span id="score-value">0</span></div>
+        <div class="hud-pill">LIVES <span id="lives-value">2</span></div>
+        <div class="hud-pill">BEST <span id="high-score-value">0</span></div>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

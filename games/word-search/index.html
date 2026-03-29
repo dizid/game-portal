@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Word Search - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body {
+        width: 100%; height: 100%;
+        background: #1a1a2e;
+        font-family: 'Courier New', Courier, monospace;
+        color: #e0e0f0;
+        overflow: hidden;
+      }
+      #game-container {
+        width: 100%; height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+      }
+      #hud {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 48px 8px 12px;
+        background: rgba(0,0,0,0.4);
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        flex-shrink: 0;
+      }
+      .hud-item {
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(100,180,255,0.3);
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+      }
+      .hud-item span { color: #64b4ff; font-weight: bold; }
+      #puzzle-select {
+        display: flex;
+        gap: 6px;
+        padding: 6px 12px;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .puzzle-btn {
+        background: rgba(0,0,0,0.4);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: #ccc;
+        font-size: 11px;
+        padding: 4px 10px;
+        cursor: pointer;
+        font-family: inherit;
+        transition: all 0.15s;
+      }
+      .puzzle-btn:hover { border-color: #64b4ff; color: #64b4ff; }
+      .puzzle-btn.active { border-color: #64b4ff; color: #1a1a2e; background: #64b4ff; }
+      #main-area {
+        display: flex;
+        flex: 1;
+        width: 100%;
+        overflow: hidden;
+        gap: 0;
+      }
+      #canvas-wrap {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px;
+      }
+      #game-canvas {
+        display: block;
+        touch-action: none;
+        cursor: crosshair;
+      }
+      #word-panel {
+        width: 130px;
+        flex-shrink: 0;
+        overflow-y: auto;
+        padding: 8px 8px 8px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+      #word-panel h3 {
+        font-size: 11px;
+        color: rgba(255,255,255,0.5);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+        padding-bottom: 4px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+      }
+      .word-item {
+        font-size: 12px;
+        padding: 3px 6px;
+        border-radius: 4px;
+        transition: all 0.3s;
+        letter-spacing: 0.5px;
+        color: #ccc;
+        background: rgba(255,255,255,0.05);
+      }
+      .word-item.found {
+        text-decoration: line-through;
+        color: rgba(255,255,255,0.3);
+        background: rgba(100,255,150,0.1);
+      }
+      #mute-btn {
+        position: fixed;
+        top: 8px; right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px; height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      @media (max-width: 500px) {
+        #word-panel { width: 100px; }
+        .word-item { font-size: 10px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-item">SCORE <span id="score-value">0</span></div>
+        <div class="hud-item">TIME <span id="timer-value">0</span>s</div>
+        <div class="hud-item">BEST <span id="high-score-value">0</span></div>
+      </div>
+      <div id="puzzle-select">
+        <button class="puzzle-btn active" data-idx="0">Animals</button>
+        <button class="puzzle-btn" data-idx="1">Countries</button>
+        <button class="puzzle-btn" data-idx="2">Food</button>
+        <button class="puzzle-btn" data-idx="3">Space</button>
+        <button class="puzzle-btn" data-idx="4">Sports</button>
+      </div>
+      <div id="main-area">
+        <div id="canvas-wrap">
+          <canvas id="game-canvas"></canvas>
+        </div>
+        <div id="word-panel">
+          <h3>Find:</h3>
+          <div id="word-list"></div>
+        </div>
+      </div>
+    </div>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

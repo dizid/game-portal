@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Blackjack - Game Portal</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: 'Georgia', serif;
+        color: #ffffff;
+        user-select: none;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px;
+      }
+
+      /* ── Overlays (READY / GAME OVER) ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 30, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 100;
+        padding: 24px;
+      }
+
+      .overlay.hidden {
+        display: none;
+      }
+
+      .overlay h1 {
+        font-size: clamp(28px, 6vw, 48px);
+        color: #ffd700;
+        text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+        letter-spacing: 2px;
+        text-align: center;
+      }
+
+      .overlay p {
+        font-size: clamp(14px, 3vw, 18px);
+        color: rgba(255, 255, 255, 0.8);
+        text-align: center;
+        max-width: 320px;
+        line-height: 1.5;
+      }
+
+      .overlay .final-score {
+        font-size: clamp(20px, 4vw, 32px);
+        color: #ffd700;
+        font-weight: bold;
+      }
+
+      .btn {
+        padding: 12px 32px;
+        border: 2px solid #ffd700;
+        background: rgba(255, 215, 0, 0.15);
+        color: #ffd700;
+        font-family: 'Georgia', serif;
+        font-size: 16px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        letter-spacing: 1px;
+      }
+
+      .btn:hover {
+        background: rgba(255, 215, 0, 0.3);
+      }
+
+      .btn:active {
+        transform: scale(0.96);
+      }
+
+      /* ── HUD ── */
+      #hud {
+        width: 100%;
+        max-width: 480px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid rgba(255, 215, 0, 0.25);
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-family: 'Courier New', monospace;
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      #hud span {
+        color: #ffd700;
+        font-weight: bold;
+      }
+
+      /* ── Table felt ── */
+      #table {
+        width: 100%;
+        max-width: 480px;
+        background: linear-gradient(135deg, #0a4a1a 0%, #0d5c20 50%, #0a4a1a 100%);
+        border: 3px solid rgba(255, 215, 0, 0.4);
+        border-radius: 12px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .hand-area {
+        min-height: 80px;
+      }
+
+      .hand-label {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        margin-bottom: 4px;
+      }
+
+      .hand-value {
+        font-size: 13px;
+        color: #ffd700;
+        font-family: 'Courier New', monospace;
+        margin-bottom: 6px;
+      }
+
+      .cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        min-height: 72px;
+      }
+
+      /* ── Playing cards ── */
+      .card {
+        width: 48px;
+        height: 68px;
+        background: #ffffff;
+        border-radius: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.2);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 3px 4px;
+        font-size: 13px;
+        font-weight: bold;
+        font-family: 'Georgia', serif;
+        box-shadow: 2px 2px 6px rgba(0, 0, 0, 0.4);
+        flex-shrink: 0;
+        position: relative;
+        transition: transform 0.15s;
+      }
+
+      .card.red {
+        color: #cc0000;
+      }
+
+      .card.black {
+        color: #111111;
+      }
+
+      .card.face-down {
+        background: linear-gradient(135deg, #1a237e 25%, #283593 25%, #283593 50%, #1a237e 50%, #1a237e 75%, #283593 75%);
+        background-size: 10px 10px;
+        border: 2px solid #1a237e;
+      }
+
+      .card-rank {
+        line-height: 1;
+      }
+
+      .card-suit {
+        font-size: 16px;
+        text-align: center;
+        line-height: 1;
+      }
+
+      .card-rank-bottom {
+        line-height: 1;
+        transform: rotate(180deg);
+        text-align: right;
+      }
+
+      /* ── Divider ── */
+      .divider {
+        height: 1px;
+        background: rgba(255, 215, 0, 0.2);
+        margin: 2px 0;
+      }
+
+      /* ── Message ── */
+      #round-message {
+        text-align: center;
+        font-size: 15px;
+        min-height: 20px;
+        color: #ffffff;
+        font-style: italic;
+      }
+
+      #round-message.win {
+        color: #4cff91;
+        font-style: normal;
+        font-weight: bold;
+      }
+
+      #round-message.lose {
+        color: #ff5c5c;
+        font-style: normal;
+        font-weight: bold;
+      }
+
+      #round-message.push {
+        color: #ffd700;
+        font-style: normal;
+        font-weight: bold;
+      }
+
+      /* ── Bet buttons ── */
+      #bet-area {
+        width: 100%;
+        max-width: 480px;
+        margin-top: 8px;
+        flex-shrink: 0;
+      }
+
+      #bet-area p {
+        font-size: 13px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin-bottom: 8px;
+        font-family: 'Courier New', monospace;
+      }
+
+      #bet-area p span {
+        color: #ffd700;
+        font-weight: bold;
+      }
+
+      .bet-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .bet-btn {
+        padding: 10px 16px;
+        background: rgba(255, 215, 0, 0.15);
+        border: 2px solid rgba(255, 215, 0, 0.5);
+        color: #ffd700;
+        font-family: 'Georgia', serif;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        min-width: 64px;
+      }
+
+      .bet-btn:hover {
+        background: rgba(255, 215, 0, 0.3);
+      }
+
+      .bet-btn:active {
+        transform: scale(0.95);
+      }
+
+      .bet-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* ── Action buttons ── */
+      #action-area {
+        width: 100%;
+        max-width: 480px;
+        margin-top: 8px;
+        flex-shrink: 0;
+      }
+
+      .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+
+      .action-btn {
+        padding: 12px 20px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.4);
+        color: #ffffff;
+        font-family: 'Georgia', serif;
+        font-size: 14px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s, transform 0.1s;
+        min-width: 80px;
+      }
+
+      .action-btn:hover {
+        background: rgba(255, 255, 255, 0.2);
+      }
+
+      .action-btn:active {
+        transform: scale(0.95);
+      }
+
+      .action-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .action-btn.double {
+        border-color: rgba(255, 165, 0, 0.6);
+        color: #ffa500;
+        background: rgba(255, 165, 0, 0.1);
+      }
+
+      .action-btn.double:hover {
+        background: rgba(255, 165, 0, 0.2);
+      }
+
+      .hidden {
+        display: none !important;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- READY overlay -->
+      <div id="overlay-ready" class="overlay">
+        <h1>BLACKJACK</h1>
+        <p>Beat the dealer to 21 without going bust.<br />Start with 1,000 chips.</p>
+        <button class="btn" id="btn-start">DEAL CARDS</button>
+      </div>
+
+      <!-- GAME OVER overlay -->
+      <div id="overlay-gameover" class="overlay hidden">
+        <h1>GAME OVER</h1>
+        <p>You ran out of chips!</p>
+        <p class="final-score">Final Score: <span id="final-score-value">0</span></p>
+        <button class="btn" id="btn-restart">PLAY AGAIN</button>
+      </div>
+
+      <!-- HUD -->
+      <div id="hud">
+        <div>CHIPS <span id="hud-chips">1000</span></div>
+        <div>BET <span id="hud-bet">0</span></div>
+        <div>BEST <span id="hud-best">0</span></div>
+      </div>
+
+      <!-- Table -->
+      <div id="table">
+        <!-- Dealer hand -->
+        <div class="hand-area">
+          <div class="hand-label">Dealer</div>
+          <div class="hand-value" id="dealer-value">?</div>
+          <div class="cards" id="dealer-cards"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Round message -->
+        <div id="round-message"></div>
+
+        <div class="divider"></div>
+
+        <!-- Player hand -->
+        <div class="hand-area">
+          <div class="hand-label">Player</div>
+          <div class="hand-value" id="player-value">0</div>
+          <div class="cards" id="player-cards"></div>
+        </div>
+      </div>
+
+      <!-- Bet area -->
+      <div id="bet-area">
+        <p>Current bet: <span id="current-bet-display">0</span> | Chips: <span id="chips-display">1000</span></p>
+        <div class="bet-buttons">
+          <button class="bet-btn" data-amount="10">+10</button>
+          <button class="bet-btn" data-amount="25">+25</button>
+          <button class="bet-btn" data-amount="50">+50</button>
+          <button class="bet-btn" data-amount="100">+100</button>
+          <button class="bet-btn" id="btn-deal-hand">DEAL</button>
+        </div>
+      </div>
+
+      <!-- Action area -->
+      <div id="action-area" class="hidden">
+        <div class="action-buttons">
+          <button class="action-btn" id="btn-hit">HIT</button>
+          <button class="action-btn" id="btn-stand">STAND</button>
+          <button class="action-btn double" id="btn-double">DOUBLE</button>
+        </div>
+      </div>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Trivia - Game Portal</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: #1a1a2e;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #ffffff;
+        user-select: none;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 12px;
+      }
+
+      /* ── Overlays ── */
+      .overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(10, 10, 30, 0.95);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 100;
+        padding: 24px;
+      }
+
+      .overlay.hidden {
+        display: none;
+      }
+
+      .overlay h1 {
+        font-size: clamp(28px, 7vw, 52px);
+        background: linear-gradient(135deg, #a78bfa, #60a5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 2px;
+        text-align: center;
+      }
+
+      .overlay p {
+        font-size: clamp(13px, 3vw, 16px);
+        color: rgba(255, 255, 255, 0.75);
+        text-align: center;
+        max-width: 340px;
+        line-height: 1.6;
+      }
+
+      .overlay .big-stat {
+        font-size: clamp(22px, 5vw, 38px);
+        color: #a78bfa;
+        font-weight: bold;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        width: 100%;
+        max-width: 300px;
+      }
+
+      .stat-box {
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(167, 139, 250, 0.3);
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+      }
+
+      .stat-box .label {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+
+      .stat-box .value {
+        font-size: 20px;
+        font-weight: bold;
+        color: #a78bfa;
+      }
+
+      .btn {
+        padding: 12px 36px;
+        background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        border: none;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: opacity 0.2s, transform 0.1s;
+        letter-spacing: 0.5px;
+      }
+
+      .btn:hover {
+        opacity: 0.85;
+      }
+
+      .btn:active {
+        transform: scale(0.96);
+      }
+
+      /* ── HUD ── */
+      #hud {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(167, 139, 250, 0.2);
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-size: 13px;
+        flex-shrink: 0;
+      }
+
+      #hud span {
+        color: #a78bfa;
+        font-weight: bold;
+      }
+
+      /* ── Category badge ── */
+      #category-badge {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.07);
+        border-radius: 20px;
+        padding: 4px 12px;
+        margin-bottom: 6px;
+        flex-shrink: 0;
+      }
+
+      /* ── Timer bar ── */
+      #timer-track {
+        width: 100%;
+        max-width: 520px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        margin-bottom: 10px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      #timer-fill {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #7c3aed, #60a5fa);
+        border-radius: 3px;
+        transition: width 0.1s linear, background 0.5s;
+      }
+
+      #timer-fill.warning {
+        background: linear-gradient(90deg, #f59e0b, #ef4444);
+      }
+
+      /* ── Question ── */
+      #question-wrap {
+        width: 100%;
+        max-width: 520px;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(167, 139, 250, 0.2);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        flex-shrink: 0;
+      }
+
+      #question-meta {
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.4);
+        margin-bottom: 8px;
+      }
+
+      #question-text {
+        font-size: clamp(14px, 3.5vw, 17px);
+        line-height: 1.5;
+        color: #ffffff;
+      }
+
+      /* ── Streak banner ── */
+      #streak-banner {
+        font-size: 13px;
+        color: #fbbf24;
+        text-align: center;
+        min-height: 20px;
+        margin-bottom: 6px;
+        font-weight: 600;
+        flex-shrink: 0;
+      }
+
+      /* ── Answer options ── */
+      #options-grid {
+        width: 100%;
+        max-width: 520px;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+
+      .option-btn {
+        padding: 12px 10px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 2px solid rgba(167, 139, 250, 0.3);
+        border-radius: 10px;
+        color: #ffffff;
+        font-family: inherit;
+        font-size: clamp(12px, 2.8vw, 14px);
+        line-height: 1.4;
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, transform 0.1s;
+        text-align: left;
+        min-height: 56px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .option-btn:hover:not(:disabled) {
+        background: rgba(167, 139, 250, 0.15);
+        border-color: rgba(167, 139, 250, 0.6);
+      }
+
+      .option-btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .option-btn:disabled {
+        cursor: not-allowed;
+      }
+
+      .option-btn.correct {
+        background: rgba(52, 211, 153, 0.2);
+        border-color: #34d399;
+      }
+
+      .option-btn.wrong {
+        background: rgba(248, 113, 113, 0.2);
+        border-color: #f87171;
+      }
+
+      .option-btn.reveal {
+        background: rgba(52, 211, 153, 0.1);
+        border-color: rgba(52, 211, 153, 0.4);
+      }
+
+      .option-letter {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: bold;
+        flex-shrink: 0;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .option-btn.correct .option-letter {
+        background: #34d399;
+        color: #000;
+      }
+
+      .option-btn.wrong .option-letter {
+        background: #f87171;
+        color: #000;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white; font-size: 18px;
+        width: 36px; height: 36px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <!-- READY overlay -->
+      <div id="overlay-ready" class="overlay">
+        <h1>TRIVIA</h1>
+        <p>10 questions across 6 categories.<br />15 seconds per question. Streak bonuses apply!</p>
+        <button class="btn" id="btn-start">START QUIZ</button>
+      </div>
+
+      <!-- GAME OVER overlay -->
+      <div id="overlay-gameover" class="overlay hidden">
+        <h1>ROUND OVER</h1>
+        <div class="big-stat" id="final-score-display">0 pts</div>
+        <div class="stat-grid">
+          <div class="stat-box">
+            <div class="label">Correct</div>
+            <div class="value" id="stat-correct">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Accuracy</div>
+            <div class="value" id="stat-accuracy">0%</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Best Streak</div>
+            <div class="value" id="stat-streak">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Best Score</div>
+            <div class="value" id="stat-best">0</div>
+          </div>
+        </div>
+        <button class="btn" id="btn-restart">PLAY AGAIN</button>
+      </div>
+
+      <!-- HUD -->
+      <div id="hud">
+        <div>Q <span id="hud-q">1</span>/10</div>
+        <div>SCORE <span id="hud-score">0</span></div>
+        <div>BEST <span id="hud-best">0</span></div>
+      </div>
+
+      <!-- Category -->
+      <div id="category-badge">Category</div>
+
+      <!-- Timer -->
+      <div id="timer-track">
+        <div id="timer-fill"></div>
+      </div>
+
+      <!-- Question -->
+      <div id="question-wrap">
+        <div id="question-meta">Question 1 of 10</div>
+        <div id="question-text">Loading...</div>
+      </div>
+
+      <!-- Streak -->
+      <div id="streak-banner"></div>
+
+      <!-- Options -->
+      <div id="options-grid">
+        <button class="option-btn" id="opt-0"><span class="option-letter">A</span><span class="opt-text"></span></button>
+        <button class="option-btn" id="opt-1"><span class="option-letter">B</span><span class="opt-text"></span></button>
+        <button class="option-btn" id="opt-2"><span class="option-letter">C</span><span class="opt-text"></span></button>
+        <button class="option-btn" id="opt-3"><span class="option-letter">D</span><span class="opt-text"></span></button>
+      </div>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

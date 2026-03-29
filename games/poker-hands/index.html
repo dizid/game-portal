@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Poker Hands - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        background: #1a1a2e;
+        font-family: 'Georgia', serif;
+        color: #fff;
+        overflow: hidden;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 12px;
+        gap: 10px;
+        overflow-y: auto;
+      }
+
+      /* HUD bar */
+      #hud {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        border-radius: 10px;
+        padding: 8px 14px;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        flex-shrink: 0;
+      }
+
+      .hud-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+      .hud-label { opacity: 0.5; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+      .hud-value { color: #ffd700; font-weight: bold; font-size: 16px; }
+
+      /* Hand name display */
+      #hand-name {
+        font-size: 20px;
+        font-weight: bold;
+        color: #ffd700;
+        text-align: center;
+        min-height: 28px;
+        text-shadow: 0 0 12px rgba(255,215,0,0.6);
+        flex-shrink: 0;
+      }
+
+      /* Card table area */
+      #card-table {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-shrink: 0;
+        padding: 4px 0;
+      }
+
+      /* Individual card */
+      .card {
+        width: 72px;
+        height: 104px;
+        background: #fff;
+        border-radius: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px;
+        cursor: pointer;
+        user-select: none;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, border 0.15s ease;
+        border: 3px solid transparent;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .card:active { transform: scale(0.95); }
+
+      .card.selected {
+        border-color: #00ff88;
+        transform: translateY(-12px);
+        box-shadow: 0 8px 24px rgba(0,255,136,0.5);
+      }
+
+      .card.highlight {
+        border-color: #ffd700;
+        box-shadow: 0 4px 20px rgba(255,215,0,0.6);
+      }
+
+      .card.red .rank-top,
+      .card.red .rank-bottom,
+      .card.red .suit-center { color: #cc0000; }
+
+      .card.black .rank-top,
+      .card.black .rank-bottom,
+      .card.black .suit-center { color: #111; }
+
+      .rank-top {
+        font-size: 16px;
+        font-weight: bold;
+        align-self: flex-start;
+        line-height: 1;
+      }
+
+      .suit-center {
+        font-size: 30px;
+        line-height: 1;
+      }
+
+      .rank-bottom {
+        font-size: 16px;
+        font-weight: bold;
+        align-self: flex-end;
+        transform: rotate(180deg);
+        line-height: 1;
+      }
+
+      /* Message area */
+      #message {
+        font-size: 14px;
+        color: rgba(255,255,255,0.6);
+        text-align: center;
+        min-height: 18px;
+        flex-shrink: 0;
+      }
+
+      /* Buttons */
+      #btn-row {
+        display: flex;
+        gap: 10px;
+        flex-shrink: 0;
+      }
+
+      .btn {
+        padding: 12px 28px;
+        border-radius: 8px;
+        border: none;
+        font-size: 15px;
+        font-weight: bold;
+        cursor: pointer;
+        letter-spacing: 0.5px;
+        transition: transform 0.1s, opacity 0.1s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .btn:active { transform: scale(0.96); }
+      .btn:disabled { opacity: 0.4; cursor: default; }
+
+      .btn-primary {
+        background: linear-gradient(135deg, #ffd700, #ff9500);
+        color: #1a1a2e;
+      }
+
+      .btn-secondary {
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        color: #fff;
+      }
+
+      /* Score popup floater */
+      .score-float {
+        position: fixed;
+        font-size: 22px;
+        font-weight: bold;
+        color: #ffd700;
+        pointer-events: none;
+        z-index: 999;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.8);
+        animation: floatUp 1.2s ease-out forwards;
+      }
+
+      @keyframes floatUp {
+        0%   { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-80px); }
+      }
+
+      /* End screen */
+      #end-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(26,26,46,0.95);
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        z-index: 500;
+      }
+
+      #end-screen.visible { display: flex; }
+
+      .end-title {
+        font-size: 32px;
+        font-weight: bold;
+        color: #ffd700;
+        text-shadow: 0 0 20px rgba(255,215,0,0.8);
+      }
+
+      .end-score {
+        font-size: 48px;
+        font-weight: bold;
+        color: #fff;
+      }
+
+      .end-label {
+        font-size: 14px;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      /* Mute button */
+      #mute-btn {
+        position: fixed;
+        top: 8px;
+        right: 8px;
+        z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px;
+        color: white;
+        font-size: 18px;
+        width: 36px;
+        height: 36px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* Responsive: smaller cards on tiny screens */
+      @media (max-width: 400px) {
+        .card { width: 58px; height: 84px; padding: 4px; }
+        .rank-top, .rank-bottom { font-size: 13px; }
+        .suit-center { font-size: 24px; }
+        #card-table { gap: 5px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app">
+      <div id="hud">
+        <div class="hud-item">
+          <span class="hud-label">Round</span>
+          <span class="hud-value" id="round-display">1 / 10</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Score</span>
+          <span class="hud-value" id="score-display">0</span>
+        </div>
+        <div class="hud-item">
+          <span class="hud-label">Best</span>
+          <span class="hud-value" id="best-display">0</span>
+        </div>
+      </div>
+
+      <div id="hand-name">&nbsp;</div>
+
+      <div id="card-table"></div>
+
+      <div id="message">Tap cards to discard, then Draw</div>
+
+      <div id="btn-row">
+        <button class="btn btn-primary" id="btn-draw">Draw</button>
+        <button class="btn btn-secondary" id="btn-next" style="display:none">Next Round</button>
+      </div>
+    </div>
+
+    <div id="end-screen">
+      <div class="end-label">Game Over</div>
+      <div class="end-title">Final Score</div>
+      <div class="end-score" id="final-score">0</div>
+      <div class="end-label" id="final-best-label"></div>
+      <button class="btn btn-primary" id="btn-restart">Play Again</button>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

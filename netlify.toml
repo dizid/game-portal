@@ -2,7 +2,18 @@
   command = "npm run build"
   publish = "apps/portal/dist"
 
-# SPA fallback for Vue Router
+# Game iframe files — serve directly, don't redirect to SPA
+[[redirects]]
+  from = "/games/*/index.html"
+  to = "/games/:splat/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/games/*/assets/*"
+  to = "/games/:splat/assets/:splat"
+  status = 200
+
+# SPA fallback for Vue Router (must come AFTER game rules)
 [[redirects]]
   from = "/*"
   to = "/index.html"

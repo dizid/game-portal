@@ -10,6 +10,15 @@ import {
   saveHighScore,
   requestMidrollAd,
 } from './sdk-bridge.js'
+import { audio } from './audio.js'
+
+// ── Mute button ───────────────────────────────────────────────────────────────
+
+const muteBtn = document.getElementById('mute-btn')!
+muteBtn.addEventListener('click', () => {
+  const m = audio.toggleMute()
+  muteBtn.textContent = m ? '🔇' : '🔊'
+})
 
 // ── Canvas setup ──────────────────────────────────────────────────────────────
 
@@ -45,6 +54,7 @@ let nextMidrollAt = MIDROLL_INTERVAL
 // ── Tick loop ─────────────────────────────────────────────────────────────────
 
 let lastTickTime = 0
+let lastScore = 0
 
 async function gameTick(now: number): Promise<void> {
   const elapsed = now - lastTickTime
@@ -59,6 +69,13 @@ async function gameTick(now: number): Promise<void> {
     // Report live score to portal
     reportScore(score)
 
+    // Food eaten — score increased
+    if (score > lastScore) {
+      lastScore = score
+      audio.blip()
+      try { navigator.vibrate(10) } catch {}
+    }
+
     // Midroll ad every MIDROLL_INTERVAL points
     if (score >= nextMidrollAt) {
       nextMidrollAt += MIDROLL_INTERVAL
@@ -67,6 +84,8 @@ async function gameTick(now: number): Promise<void> {
     }
 
     if (died) {
+      audio.death()
+      try { navigator.vibrate([50, 30, 50]) } catch {}
       handleGameOver(score)
     }
   }
@@ -103,11 +122,15 @@ const input = new InputHandler(
   () => {
     const state = game.getState()
     if (state === 'READY') {
+      audio.start()
+      lastScore = 0
       game.start()
     } else if (state === 'GAME_OVER') {
       // Reset and immediately start a new round
+      audio.start()
       game.reset()
       nextMidrollAt = MIDROLL_INTERVAL
+      lastScore = 0
       updateHUD(0)
       game.start()
     }

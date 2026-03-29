@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Platformer - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%; height: 100%;
+        background: #1a1a2e;
+        overflow: hidden;
+        touch-action: none;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+      }
+
+      #game-canvas {
+        display: block;
+        touch-action: none;
+      }
+
+      /* HUD */
+      #hud {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%;
+        padding: 8px 12px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+        color: rgba(255,255,255,0.9);
+        pointer-events: none;
+        user-select: none;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .hud-pill {
+        background: rgba(0,0,0,0.45);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 6px;
+        padding: 3px 9px;
+        white-space: nowrap;
+      }
+
+      .hud-pill span { color: #00ff88; font-weight: bold; }
+      .hud-pill.lives span { color: #ff4466; }
+      .hud-pill.level span { color: #8888ff; }
+
+      /* Mobile controls */
+      #mobile-controls {
+        position: absolute;
+        bottom: 0; left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        padding: 12px 16px 16px;
+        pointer-events: none;
+        user-select: none;
+      }
+
+      .ctrl-group {
+        display: flex;
+        gap: 8px;
+        pointer-events: auto;
+      }
+
+      .ctrl-btn {
+        width: 56px; height: 56px;
+        background: rgba(255,255,255,0.12);
+        border: 2px solid rgba(255,255,255,0.25);
+        border-radius: 12px;
+        color: white;
+        font-size: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.1s;
+      }
+
+      .ctrl-btn:active,
+      .ctrl-btn.pressed {
+        background: rgba(136,136,255,0.4);
+        border-color: #8888ff;
+      }
+
+      .ctrl-btn.jump-btn {
+        background: rgba(0,255,136,0.15);
+        border-color: rgba(0,255,136,0.4);
+        color: #00ff88;
+      }
+
+      .ctrl-btn.jump-btn:active,
+      .ctrl-btn.jump-btn.pressed {
+        background: rgba(0,255,136,0.4);
+      }
+
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white;
+        font-size: 18px; width: 36px; height: 36px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="game-canvas"></canvas>
+
+      <div id="hud">
+        <div class="hud-pill lives">LIVES <span id="hud-lives">3</span></div>
+        <div class="hud-pill level">LEVEL <span id="hud-level">1</span></div>
+        <div class="hud-pill">SCORE <span id="hud-score">0</span></div>
+      </div>
+
+      <div id="mobile-controls">
+        <div class="ctrl-group">
+          <div class="ctrl-btn" id="btn-left">&#8592;</div>
+          <div class="ctrl-btn" id="btn-right">&#8594;</div>
+        </div>
+        <div class="ctrl-group">
+          <div class="ctrl-btn jump-btn" id="btn-jump">&#8593;</div>
+        </div>
+      </div>
+    </div>
+
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

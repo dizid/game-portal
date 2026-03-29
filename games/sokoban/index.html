@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>Sokoban - Game Portal</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      html, body {
+        width: 100%; height: 100%;
+        background: #1a1a2e;
+        overflow: hidden;
+        touch-action: none;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        color: #e0e0f0;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+      }
+
+      /* ── HUD bar ── */
+      #hud {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 14px;
+        gap: 8px;
+        flex-wrap: wrap;
+        user-select: none;
+      }
+
+      .hud-pill {
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-width: 52px;
+      }
+
+      .hud-label { font-size: 0.58rem; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.5px; }
+      .hud-value { font-size: 0.92rem; font-weight: 700; }
+      .hud-value.level  { color: #8888ff; }
+      .hud-value.moves  { color: #ffd700; }
+      .hud-value.boxes  { color: #00ff88; }
+      .hud-value.score  { color: #ff88cc; }
+
+      /* ── Canvas area ── */
+      #canvas-wrap {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 0 8px;
+        min-height: 0;
+      }
+
+      #game-canvas {
+        display: block;
+        touch-action: none;
+        max-width: 100%;
+        max-height: 100%;
+      }
+
+      /* ── Action bar ── */
+      #action-bar {
+        width: 100%;
+        max-width: 520px;
+        display: flex;
+        gap: 8px;
+        padding: 8px 14px;
+        justify-content: center;
+        user-select: none;
+      }
+
+      .act-btn {
+        flex: 1;
+        padding: 10px 6px;
+        background: rgba(255,255,255,0.07);
+        border: 1px solid rgba(255,255,255,0.15);
+        border-radius: 8px;
+        color: #e0e0f0;
+        font-size: 0.82rem;
+        cursor: pointer;
+        transition: background 0.15s;
+        max-width: 100px;
+        text-align: center;
+      }
+
+      .act-btn:active { background: rgba(255,255,255,0.2); }
+      .act-btn.undo { border-color: rgba(255,215,0,0.3); color: #ffd700; }
+      .act-btn.reset { border-color: rgba(255,68,102,0.3); color: #ff4466; }
+      .act-btn.levels { border-color: rgba(136,136,255,0.3); color: #8888ff; }
+
+      /* ── Mobile D-pad ── */
+      #dpad {
+        display: grid;
+        grid-template-columns: repeat(3, 44px);
+        grid-template-rows: repeat(3, 44px);
+        gap: 4px;
+        padding-bottom: 8px;
+        user-select: none;
+      }
+
+      .dpad-btn {
+        width: 44px; height: 44px;
+        background: rgba(255,255,255,0.1);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 8px;
+        color: white;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+        transition: background 0.1s;
+      }
+
+      .dpad-btn:active { background: rgba(136,136,255,0.4); border-color: #8888ff; }
+      .dpad-btn.empty { background: transparent; border: none; pointer-events: none; }
+
+      /* ── Level select overlay ── */
+      #level-select {
+        display: none;
+        position: absolute;
+        inset: 0;
+        background: rgba(10,10,30,0.92);
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        padding: 20px;
+      }
+
+      #level-select.visible { display: flex; }
+
+      .level-select-inner {
+        background: #16213e;
+        border: 1px solid rgba(136,136,255,0.3);
+        border-radius: 14px;
+        padding: 20px;
+        width: 100%;
+        max-width: 360px;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+
+      .level-select-inner h2 {
+        text-align: center;
+        font-size: 1.1rem;
+        color: #8888ff;
+        margin-bottom: 14px;
+      }
+
+      .level-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .level-item {
+        aspect-ratio: 1;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 8px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.78rem;
+        font-weight: 700;
+        gap: 2px;
+        transition: background 0.15s;
+      }
+
+      .level-item:active { background: rgba(136,136,255,0.3); }
+      .level-item.locked { opacity: 0.35; cursor: not-allowed; }
+      .level-item.current { border-color: #8888ff; background: rgba(136,136,255,0.15); }
+      .level-item .stars { font-size: 0.65rem; color: #ffd700; }
+
+      .btn-close-levels {
+        width: 100%;
+        padding: 10px;
+        background: rgba(136,136,255,0.2);
+        border: 1px solid rgba(136,136,255,0.4);
+        border-radius: 8px;
+        color: #8888ff;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      #mute-btn {
+        position: fixed; top: 8px; right: 8px; z-index: 100;
+        background: rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.2);
+        border-radius: 6px; color: white;
+        font-size: 18px; width: 36px; height: 36px;
+        cursor: pointer; display: flex; align-items: center; justify-content: center;
+      }
+    </style>
+  </head>
+  <body>
+    <button id="mute-btn" aria-label="Toggle sound">🔊</button>
+
+    <div id="game-container">
+      <div id="hud">
+        <div class="hud-pill">
+          <span class="hud-label">Level</span>
+          <span class="hud-value level" id="hud-level">1</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-label">Moves</span>
+          <span class="hud-value moves" id="hud-moves">0</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-label">Boxes</span>
+          <span class="hud-value boxes" id="hud-boxes">0/0</span>
+        </div>
+        <div class="hud-pill">
+          <span class="hud-label">Score</span>
+          <span class="hud-value score" id="hud-score">0</span>
+        </div>
+      </div>
+
+      <div id="canvas-wrap">
+        <canvas id="game-canvas"></canvas>
+      </div>
+
+      <div id="action-bar">
+        <button class="act-btn undo" id="btn-undo">Undo</button>
+        <button class="act-btn reset" id="btn-reset">Reset</button>
+        <button class="act-btn levels" id="btn-levels">Levels</button>
+      </div>
+
+      <div id="dpad">
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" id="dpad-up">&#8593;</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" id="dpad-left">&#8592;</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" id="dpad-right">&#8594;</div>
+        <div class="dpad-btn empty"></div>
+        <div class="dpad-btn" id="dpad-down">&#8595;</div>
+        <div class="dpad-btn empty"></div>
+      </div>
+    </div>
+
+    <div id="level-select">
+      <div class="level-select-inner">
+        <h2>Select Level</h2>
+        <div class="level-grid" id="level-grid"></div>
+        <button class="btn-close-levels" id="btn-close-levels">Close</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

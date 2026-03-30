@@ -13,23 +13,11 @@
   to = "/games/:splat/assets/:splat"
   status = 200
 
-# SPA fallback for Vue Router (must come AFTER game rules)
+# SPA fallback for Vue Router — force=true needed because /games/ dir exists
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
-
-# Trailing slash canonicalization
-[[redirects]]
-  from = "/games/"
-  to = "/games"
-  status = 301
-  force = true
-
-[[redirects]]
-  from = "/games/:category/"
-  to = "/games/:category"
-  status = 301
   force = true
 
 # Cache game assets aggressively

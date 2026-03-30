@@ -90,6 +90,15 @@ const LEVELS: Level[] = [
   },
 ]
 
+// Win particle for celebration burst
+interface CParticle {
+  x: number; y: number; vx: number; vy: number
+  alpha: number; size: number
+}
+
+// Level transition phases
+type TransitionPhase = 'none' | 'fadeOut' | 'showText' | 'fadeIn'
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const GRID_W = 30
@@ -130,6 +139,27 @@ let playing = false
 let won = false
 let autoPlayInterval: ReturnType<typeof setInterval> | null = null
 let running = false
+
+// Win particles — green sparkle burst on level complete
+let winParticles: CParticle[] = []
+let winParticleLastTime = 0
+
+// Hint system — show hint button after 3 failed attempts
+let failedAttempts = 0
+let hintCell: [number, number] | null = null
+let hintTimer = 0  // seconds remaining for hint highlight
+
+// Level transition — fade out, show level text, fade in
+let transitionPhase: TransitionPhase = 'none'
+let transitionAlpha = 0  // 0 = transparent, 1 = black overlay
+let transitionTimer = 0
+let nextLevelIdx = 0
+
+// Generation counter pulse — brief visual feedback each step
+let genPulseTimer = 0  // seconds remaining for glow
+
+// Speed control — toggle between normal (120ms) and fast (40ms)
+let simSpeed: 120 | 40 = 120
 
 // ── Grid helpers ──────────────────────────────────────────────────────────────
 
@@ -190,7 +220,8 @@ function checkWin(level: Level): boolean {
 
 // ── Game controls ─────────────────────────────────────────────────────────────
 
-function startLevel(levelIdx: number): void {
+function startLevel(levelIdx: number, fromTransition = false): void {
+  const isNewLevel = levelIdx !== currentLevel
   currentLevel = levelIdx
   grid = emptyGrid()
   history = [cloneGrid(grid)]
@@ -198,7 +229,19 @@ function startLevel(levelIdx: number): void {
   playing = false
   won = false
   seedsPlaced = 0
+  winParticles = []
+  hintCell = null
+  hintTimer = 0
+  genPulseTimer = 0
+  // Reset failed attempts when advancing to a new level
+  if (isNewLevel) failedAttempts = 0
+  // Only reset transition if not called from within the transition sequence
+  if (!fromTransition) {
+    transitionPhase = 'none'
+    transitionAlpha = 0
+  }
   stopAutoPlay()
+  updateHintButton()
 
   const level = LEVELS[levelIdx]
   ;(document.getElementById('level-val') as HTMLSpanElement).textContent = String(levelIdx + 1)
@@ -219,6 +262,9 @@ function playStep(): void {
   history.push(cloneGrid(grid))
   ;(document.getElementById('gen-val') as HTMLSpanElement).textContent = String(generation)
 
+  // Pulse the generation counter visually
+  genPulseTimer = 0.35
+
   if (checkWin(level)) {
     won = true
     stopAutoPlay()
@@ -230,21 +276,43 @@ function playStep(): void {
     ;(document.getElementById('score-val') as HTMLSpanElement).textContent = String(score)
     ;(document.getElementById('status-val') as HTMLSpanElement).textContent = 'Won!'
 
-    setTimeout(() => {
-      if (currentLevel + 1 >= LEVELS.length) {
-        endGame()
-      } else {
-        startLevel(currentLevel + 1)
+    // Spawn win particles from matched cells
+    const targetGrid = targetToGrid(level.target)
+    for (let r = 0; r < GRID_H; r++) {
+      for (let c = 0; c < GRID_W; c++) {
+        if (targetGrid[r][c] && grid[r][c]) {
+          const cx = c * cellSize + cellSize / 2
+          const cy = r * cellSize + cellSize / 2
+          for (let i = 0; i < 2; i++) {
+            const angle = Math.random() * Math.PI * 2
+            const speed = 30 + Math.random() * 80
+            winParticles.push({
+              x: cx, y: cy,
+              vx: Math.cos(angle) * speed,
+              vy: Math.sin(angle) * speed - 20,
+              alpha: 1.0,
+              size: 2 + Math.random() * 2,
+            })
+          }
+        }
       }
-    }, 1500)
+    }
+
+    // Start level transition instead of instant jump
+    nextLevelIdx = currentLevel + 1
+    transitionPhase = 'fadeOut'
+    transitionAlpha = 0
+    transitionTimer = 0
     return
   }
 
   if (generation >= Math.max(level.maxGenerations, MAX_AUTO_GENS)) {
     stopAutoPlay()
     playing = false
+    failedAttempts++
     ;(document.getElementById('status-val') as HTMLSpanElement).textContent = 'Try again'
     updateButtons()
+    updateHintButton()
   }
 }
 
@@ -258,7 +326,7 @@ function startAutoPlay(): void {
     if (!running || !playing) { stopAutoPlay(); return }
     playStep()
     draw()
-  }, 120)
+  }, simSpeed)
 }
 
 function stopAutoPlay(): void {
@@ -287,6 +355,22 @@ function updateButtons(): void {
   const stepBtn = document.getElementById('step-btn') as HTMLButtonElement
   playBtn.textContent = playing ? 'Pause' : 'Play'
   stepBtn.disabled = playing || won
+}
+
+function updateHintButton(): void {
+  const btn = document.getElementById('hint-btn') as HTMLButtonElement
+  if (!btn) return
+  btn.style.display = failedAttempts >= 3 && !won ? 'inline-flex' : 'none'
+}
+
+function revealHint(): void {
+  const level = LEVELS[currentLevel]
+  const targetCells = level.target.filter(([r, c]) => !grid[r][c])
+  if (targetCells.length === 0) return
+  const pick = targetCells[Math.floor(Math.random() * targetCells.length)]
+  hintCell = [pick[0], pick[1]]
+  hintTimer = 2.0  // show for 2 seconds
+  draw()
 }
 
 function updateSeedsDisplay(): void {
@@ -326,20 +410,7 @@ function draw(): void {
     ctx.beginPath(); ctx.moveTo(0, r * cs); ctx.lineTo(w, r * cs); ctx.stroke()
   }
 
-  // Target ghost overlay (blue)
-  for (let r = 0; r < GRID_H; r++) {
-    for (let c = 0; c < GRID_W; c++) {
-      if (targetGrid[r][c]) {
-        ctx.fillStyle = 'rgba(60,100,255,0.3)'
-        ctx.fillRect(c * cs + 1, r * cs + 1, cs - 2, cs - 2)
-        ctx.strokeStyle = 'rgba(80,130,255,0.6)'
-        ctx.lineWidth = 1
-        ctx.strokeRect(c * cs + 1, r * cs + 1, cs - 2, cs - 2)
-      }
-    }
-  }
-
-  // Live cells
+  // Live cells — draw first so ghost overlay renders on top
   for (let r = 0; r < GRID_H; r++) {
     for (let c = 0; c < GRID_W; c++) {
       if (!grid[r][c]) continue
@@ -358,15 +429,77 @@ function draw(): void {
     }
   }
 
-  // Win flash
-  if (won) {
-    ctx.fillStyle = 'rgba(100,255,100,0.15)'
+  // Target ghost overlay — always visible so player can see goal during simulation.
+  // Only rendered on cells NOT currently alive so it doesn't obscure live cells.
+  for (let r = 0; r < GRID_H; r++) {
+    for (let c = 0; c < GRID_W; c++) {
+      if (!targetGrid[r][c] || grid[r][c]) continue  // skip alive or non-target
+      ctx.fillStyle = 'rgba(60,100,255,0.25)'
+      ctx.fillRect(c * cs + 1, r * cs + 1, cs - 2, cs - 2)
+      ctx.strokeStyle = 'rgba(80,130,255,0.5)'
+      ctx.lineWidth = 1
+      ctx.strokeRect(c * cs + 1, r * cs + 1, cs - 2, cs - 2)
+    }
+  }
+
+  // Hint cell — gold highlight for 2s after player requests hint
+  if (hintCell && hintTimer > 0) {
+    const [hr, hc] = hintCell
+    ctx.save()
+    ctx.globalAlpha = Math.min(1, hintTimer)
+    ctx.fillStyle = 'rgba(255,200,40,0.7)'
+    ctx.strokeStyle = '#ffcc28'
+    ctx.lineWidth = 2
+    ctx.fillRect(hc * cs + 1, hr * cs + 1, cs - 2, cs - 2)
+    ctx.strokeRect(hc * cs + 1, hr * cs + 1, cs - 2, cs - 2)
+    ctx.restore()
+  }
+
+  // Win particles — green sparkles rising upward
+  for (const p of winParticles) {
+    ctx.save()
+    ctx.globalAlpha = Math.max(0, p.alpha)
+    ctx.fillStyle = '#44ff88'
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  // Win flash overlay
+  if (won && transitionPhase === 'none') {
+    ctx.fillStyle = 'rgba(100,255,100,0.12)'
     ctx.fillRect(0, 0, w, h)
-    ctx.fillStyle = 'rgba(100,255,100,0.9)'
-    ctx.font = `bold ${Math.floor(cs * 1.5)}px Courier New`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText('LEVEL COMPLETE!', w / 2, h / 2)
+  }
+
+  // Level transition overlay — fade to black, show level text, fade back in
+  if (transitionPhase !== 'none') {
+    ctx.save()
+    ctx.globalAlpha = transitionAlpha
+    ctx.fillStyle = '#000'
+    ctx.fillRect(0, 0, w, h)
+
+    if (transitionPhase === 'showText') {
+      ctx.globalAlpha = 1
+      ctx.fillStyle = '#88aaff'
+      ctx.font = `bold ${Math.floor(cs * 1.4)}px Courier New`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'middle'
+      ctx.fillText(`LEVEL ${nextLevelIdx + 1}`, w / 2, h / 2)
+    }
+    ctx.restore()
+  }
+
+  // Generation counter glow — brief DOM highlight each step
+  const genEl = document.getElementById('gen-val') as HTMLSpanElement | null
+  if (genEl) {
+    if (genPulseTimer > 0) {
+      genEl.style.textShadow = `0 0 ${Math.floor(genPulseTimer * 12)}px #88aaff`
+      genEl.style.color = '#ccddff'
+    } else {
+      genEl.style.textShadow = ''
+      genEl.style.color = ''
+    }
   }
 }
 
@@ -423,6 +556,18 @@ document.getElementById('step-btn')!.addEventListener('click', () => {
 
 document.getElementById('rewind-btn')!.addEventListener('click', rewind)
 
+document.getElementById('speed-btn')!.addEventListener('click', () => {
+  // Restart interval at new speed if currently playing
+  const wasPlaying = playing
+  if (wasPlaying) stopAutoPlay()
+  simSpeed = simSpeed === 120 ? 40 : 120
+  const btn = document.getElementById('speed-btn') as HTMLButtonElement
+  btn.textContent = simSpeed === 40 ? 'Speed: Fast' : 'Speed: Normal'
+  if (wasPlaying) startAutoPlay()
+})
+
+document.getElementById('hint-btn')!.addEventListener('click', revealHint)
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────────
 
 function buildOverlay(title: string, body: string, btnLabel: string, onBtn: () => void): void {
@@ -457,18 +602,83 @@ function endGame(): void {
 function startGame(): void {
   score = 0
   running = true
+  failedAttempts = 0
+  simSpeed = 120
+  winParticles = []
+  transitionPhase = 'none'
   ;(document.getElementById('score-val') as HTMLSpanElement).textContent = '0'
   const ov = document.getElementById('overlay')!
   ov.style.display = 'none'
   startLevel(0)
 }
 
-// ── Loop (only for animation, not game step) ──────────────────────────────────
+// ── Loop (animation timers — game steps run via setInterval) ──────────────────
 
 let lastTime = 0
 function loop(ts: number): void {
-  if (!playing) draw()  // redraw static states
+  const dt = Math.min((ts - lastTime) / 1000, 0.1)
   lastTime = ts
+
+  // Update win particles
+  if (winParticles.length > 0) {
+    for (let i = winParticles.length - 1; i >= 0; i--) {
+      const p = winParticles[i]
+      p.x += p.vx * dt
+      p.y += p.vy * dt
+      p.vy += 80 * dt  // gravity
+      p.alpha -= dt * 2.0  // fade over 0.5s
+      if (p.alpha <= 0) winParticles.splice(i, 1)
+    }
+  }
+
+  // Update hint timer
+  if (hintTimer > 0) {
+    hintTimer = Math.max(0, hintTimer - dt)
+    if (hintTimer <= 0) hintCell = null
+  }
+
+  // Update generation pulse
+  if (genPulseTimer > 0) {
+    genPulseTimer = Math.max(0, genPulseTimer - dt)
+  }
+
+  // Update level transition
+  if (transitionPhase === 'fadeOut') {
+    transitionTimer += dt
+    transitionAlpha = Math.min(1, transitionTimer / 0.3)
+    if (transitionAlpha >= 1) {
+      transitionPhase = 'showText'
+      transitionTimer = 0
+      // Advance to next level data so the level text is correct
+    }
+  } else if (transitionPhase === 'showText') {
+    transitionTimer += dt
+    if (transitionTimer >= 0.5) {
+      // Trigger next level and begin fade-in
+      if (nextLevelIdx >= LEVELS.length) {
+        transitionPhase = 'none'
+        endGame()
+      } else {
+        startLevel(nextLevelIdx, true)  // fromTransition=true preserves transition state
+        transitionPhase = 'fadeIn'
+        transitionAlpha = 1
+        transitionTimer = 0
+      }
+    }
+  } else if (transitionPhase === 'fadeIn') {
+    transitionTimer += dt
+    transitionAlpha = Math.max(0, 1 - transitionTimer / 0.3)
+    if (transitionAlpha <= 0) {
+      transitionPhase = 'none'
+    }
+  }
+
+  // Always redraw to animate particles/transitions even when not playing
+  if (!playing || winParticles.length > 0 || transitionPhase !== 'none' ||
+      hintTimer > 0 || genPulseTimer > 0) {
+    draw()
+  }
+
   requestAnimationFrame(loop)
 }
 

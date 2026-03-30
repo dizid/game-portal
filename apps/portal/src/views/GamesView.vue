@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { useGamesStore } from '../stores/games'
 import GameCard from '../components/GameCard.vue'
 import type { GameCategory } from '@game-portal/types'
@@ -48,6 +49,80 @@ const pageTitle = computed(() => {
   const cat = categoryItems.find((c) => c.id === selectedCategory.value)
   return cat ? `${cat.icon} ${cat.label} Games` : 'Games'
 })
+
+// Category descriptions for SEO
+const categoryDescriptions: Record<string, string> = {
+  arcade: 'Classic arcade games — Snake, Pac-Man, Space Invaders, and more. Fast-paced action, no download required.',
+  puzzle: 'Brain-teasing puzzle games — Tetris, 2048, Sudoku, Minesweeper. Challenge your mind, play free.',
+  strategy: 'Strategic thinking games — Chess, Tower Defense, game theory simulations. Plan, execute, win.',
+  simulation: 'Business and ecosystem simulations — Lemonade Stand, Startup Sim, tide pool ecosystems.',
+  racing: 'Racing and runner games — endless runners, drift challenges. Test your reflexes.',
+  action: 'Action platformer games — jump, dodge, collect coins. Classic side-scrolling fun.',
+  word: 'Word games — Wordle, Hangman, Typing Speed, Word Search. Sharpen your vocabulary.',
+  card: 'Card games — Solitaire, Blackjack, Memory Match, Poker. Classic card entertainment.',
+  idle: 'Idle and incremental games — Cookie Clicker, Idle Farm. Progress even while away.',
+  trivia: 'Trivia and reflex games — test your knowledge and reaction time.',
+  adventure: 'Text adventure and RPG games — branching stories, combat, exploration.',
+  experimental: '27 unique experimental games — game theory, physics simulations, biology, cryptography. Games that teach you something.',
+}
+
+// SEO: dynamic head based on selected category
+useHead(computed(() => {
+  const cat = selectedCategory.value
+  if (!cat) {
+    return {
+      title: 'All Free Browser Games — 80+ Games, No Download | Game Portal',
+      meta: [
+        { name: 'description', content: 'Browse 80+ free browser games across 12 categories. Arcade, puzzle, strategy, experimental, and more. No download, no account required.' },
+        { property: 'og:title', content: 'All Free Browser Games | Game Portal' },
+        { property: 'og:description', content: 'Browse 80+ free browser games. No download, no account.' },
+      ],
+      link: [{ rel: 'canonical', href: 'https://google4games.com/games' }],
+      script: [{
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'ItemList',
+          'name': 'All Free Browser Games',
+          'numberOfItems': filteredGames.value.length,
+          'itemListElement': filteredGames.value.slice(0, 20).map((g, i) => ({
+            '@type': 'ListItem',
+            'position': i + 1,
+            'name': g.title,
+            'url': `https://google4games.com/games/${g.category}/${g.slug}`,
+          })),
+        }),
+      }],
+    }
+  }
+  const catItem = categoryItems.find(c => c.id === cat)
+  const label = catItem?.label ?? cat
+  const desc = categoryDescriptions[cat] ?? `Free ${label} browser games. No download required.`
+  return {
+    title: `Free ${label} Games Online — Play ${label} Games | Game Portal`,
+    meta: [
+      { name: 'description', content: desc },
+      { property: 'og:title', content: `Free ${label} Games | Game Portal` },
+      { property: 'og:description', content: desc },
+    ],
+    link: [{ rel: 'canonical', href: `https://google4games.com/games/${cat}` }],
+    script: [{
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        'name': `Free ${label} Games`,
+        'numberOfItems': filteredGames.value.length,
+        'itemListElement': filteredGames.value.map((g, i) => ({
+          '@type': 'ListItem',
+          'position': i + 1,
+          'name': g.title,
+          'url': `https://google4games.com/games/${g.category}/${g.slug}`,
+        })),
+      }),
+    }],
+  }
+}))
 
 function selectCategory(id: GameCategory | null): void {
   selectedCategory.value = id

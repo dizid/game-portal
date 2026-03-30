@@ -123,6 +123,13 @@ const INITIAL_GAMES: GameMeta[] = [
   g('sunk-cost-001', 'sunk-cost', 'Sunk Cost', 'Start with 1000 pts. Score drains away. Find the tiny cash-out button and press it. Optimal play = quit immediately.', 'experimental', 'micro', ['meta', 'psychology', 'irony', 'unique'], 1, 5, ['pioneer', 'snacker'], false, true),
   g('cargo-cult-001', 'cargo-cult', 'Cargo Cult', 'Perform the secret 3-step ritual to make it rain. Villagers copy your moves as noise. 10 rounds.', 'experimental', 'standard', ['ritual', 'deduction', 'noise', 'unique'], 5, 15, ['strategist', 'pioneer'], true),
   g('topology-001', 'topology', 'Topology', 'Deform shapes to match topology — same holes and connected parts, regardless of exact form. 12 levels.', 'experimental', 'standard', ['math', 'topology', 'puzzle', 'unique'], 5, 20, ['strategist', 'pioneer'], true),
+
+  // ── New Top-Tier Games ──
+  g('severing-001', 'severing', 'Severing', 'Draw cut lines across shapes to keep gems, shed rocks, and isolate bombs. Every angle is a trade-off.', 'puzzle', 'standard', ['cutting', 'spatial', 'precision', 'unique'], 3, 15, ['strategist', 'pioneer'], true, true),
+  g('bloom-chain-001', 'bloom-chain', 'Bloom Chain', 'Place seeds on a hex grid and chain-react blooms for explosive territory coverage. Scorched earth changes everything.', 'strategy', 'standard', ['chain-reaction', 'hex', 'territory', 'unique'], 3, 15, ['strategist', 'pioneer', 'collector'], true, true),
+  g('tensile-001', 'tensile', 'Tensile', 'Stretch an elastic web to collect orbs — but threads snap permanently if overstretched, fragmenting your network.', 'puzzle', 'standard', ['physics', 'elastic', 'network', 'unique'], 3, 15, ['strategist', 'pioneer'], true),
+  g('redact-001', 'redact', 'Redact', 'Black out words to satisfy contradictory redaction rules. Over-censoring costs you. Find the loophole.', 'puzzle', 'standard', ['logic', 'language', 'deduction', 'unique'], 3, 15, ['strategist', 'pioneer'], true, true),
+  g('pulse-vault-001', 'pulse-vault', 'Pulse Vault', 'Tap to create YOUR rhythm, then dodge the chaos it spawns. Fast taps = dense small obstacles. Slow taps = huge ones.', 'arcade', 'standard', ['rhythm', 'dodge', 'creative', 'unique'], 3, 15, ['champion', 'pioneer'], true, true),
 ]
 
 export const useGamesStore = defineStore('games', () => {

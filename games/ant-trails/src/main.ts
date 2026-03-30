@@ -16,6 +16,16 @@ interface Ant {
   ownTrailStrength: number
 }
 
+interface Particle {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  alpha: number
+  size: number
+  color: string
+}
+
 interface FoodSource {
   x: number
   y: number
@@ -101,6 +111,24 @@ let foodSpawnTimer = 0
 let drawing = false
 let lastDrawX = -1, lastDrawY = -1
 
+// Tutorial hint — shown on first play, dismissed on first pheromone draw
+let showTutorial = true
+let tutorialPulse = 0  // used for pulsing animation (0–1)
+
+// Particles — gold burst on food delivery
+let particles: Particle[] = []
+
+// Screen pulse — brief green flash when food delivered
+let canvasPulseAlpha = 0
+
+// Difficulty scaling — every 30s speed increases 5%, decay increases 10%
+let difficultyTimer = 0
+let difficultySpeedMult = 1.0
+let difficultyDecayMult = 1.0
+
+// Combo tracking — trigger audio.combo() when 3+ deliveries within 2s
+let recentDeliveries: number[] = []
+
 const ANT_COUNT = 25
 const COLONY_RADIUS = 18
 const FOOD_RADIUS = 10
@@ -146,6 +174,12 @@ function initGame(): void {
   foodDelivered = 0
   timeLeft = 120
   foodSpawnTimer = 0
+  particles = []
+  canvasPulseAlpha = 0
+  difficultyTimer = 0
+  difficultySpeedMult = 1.0
+  difficultyDecayMult = 1.0
+  recentDeliveries = []
   initPheromone()
 
   for (let i = 0; i < ANT_COUNT; i++) ants.push(spawnAnt())
@@ -172,6 +206,34 @@ function updateAnt(ant: Ant, dt: number): void {
       foodDelivered++
       audio.score()
       ant.angle = Math.random() * Math.PI * 2
+
+      // Spawn gold particle burst (5–8 particles flying outward)
+      const burstCount = 5 + Math.floor(Math.random() * 4)
+      for (let i = 0; i < burstCount; i++) {
+        const angle = Math.random() * Math.PI * 2
+        const speed = 40 + Math.random() * 60
+        particles.push({
+          x: colonyX, y: colonyY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1.0,
+          size: 2 + Math.random() * 2,
+          color: Math.random() < 0.6 ? '#ffcc44' : '#ffee88',
+        })
+      }
+
+      // Brief green screen pulse
+      canvasPulseAlpha = 0.18
+
+      // Combo tracking — play combo sound if 3+ deliveries in last 2s
+      const now = performance.now()
+      recentDeliveries.push(now)
+      recentDeliveries = recentDeliveries.filter(t => now - t < 2000)
+      if (recentDeliveries.length >= 3) {
+        audio.combo()
+        recentDeliveries = []  // reset so combo doesn't repeat every delivery
+      }
+
       return
     }
 
@@ -267,6 +329,22 @@ function update(dt: number): void {
   timeLeft -= dt
   if (timeLeft <= 0) { timeLeft = 0; endGame(); return }
 
+  // Difficulty scaling — every 30s: +5% ant speed, +10% pheromone decay
+  difficultyTimer += dt
+  if (difficultyTimer >= 30) {
+    difficultyTimer -= 30
+    difficultySpeedMult *= 1.05
+    difficultyDecayMult *= 1.10
+    // Apply new decay rate to all pheromone cells
+    for (const cell of pheromone) {
+      cell.decay = (1 / 15) * difficultyDecayMult
+    }
+    // Apply new speed to all ants
+    for (const ant of ants) {
+      ant.speed = (1.2 + Math.random() * 0.6) * difficultySpeedMult
+    }
+  }
+
   // Spawn food
   foodSpawnTimer += dt
   if (foodSpawnTimer >= FOOD_SPAWN_INTERVAL) {
@@ -286,12 +364,35 @@ function update(dt: number): void {
     updateAnt(ant, dt)
   }
 
+  // Update particles — move and fade
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i]
+    p.x += p.vx * dt
+    p.y += p.vy * dt
+    p.vy += 60 * dt  // subtle gravity
+    p.alpha -= dt * 2.5  // fade out over ~0.4s
+    if (p.alpha <= 0) particles.splice(i, 1)
+  }
+
+  // Decay screen pulse
+  if (canvasPulseAlpha > 0) {
+    canvasPulseAlpha = Math.max(0, canvasPulseAlpha - dt * 3.6)  // ~50ms flash
+  }
+
+  // Advance tutorial pulse animation
+  tutorialPulse = (tutorialPulse + dt * 3) % (Math.PI * 2)
+
   // Clean up empty food
   for (let i = foodSources.length - 1; i >= 0; i--) {
     if (foodSources[i].amount <= 0) foodSources.splice(i, 1)
   }
 
-  // HUD
+  // HUD — update best score live if surpassed
+  if (foodDelivered > bestScore) {
+    bestScore = foodDelivered
+    saveBestScore(foodDelivered)
+    ;(document.getElementById('best-val') as HTMLSpanElement).textContent = String(bestScore)
+  }
   ;(document.getElementById('food-val') as HTMLSpanElement).textContent = String(foodDelivered)
   ;(document.getElementById('time-val') as HTMLSpanElement).textContent = String(Math.ceil(timeLeft))
   ;(document.getElementById('carry-val') as HTMLSpanElement).textContent = String(ants.filter(a => a.carrying).length)
@@ -389,6 +490,76 @@ function draw(): void {
     ctx.restore()
     void cos; void sin;  // suppress unused warning
   }
+
+  // Particles — gold burst from colony on delivery
+  for (const p of particles) {
+    ctx.save()
+    ctx.globalAlpha = Math.max(0, p.alpha)
+    ctx.fillStyle = p.color
+    ctx.beginPath()
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+    ctx.fill()
+    ctx.restore()
+  }
+
+  // Screen pulse — brief green tint on food delivery
+  if (canvasPulseAlpha > 0) {
+    ctx.save()
+    ctx.globalAlpha = canvasPulseAlpha
+    ctx.fillStyle = '#44ff88'
+    ctx.fillRect(0, 0, w, h)
+    ctx.restore()
+  }
+
+  // Tutorial hint — pulsing arrow on first play, dismissed after first trail drawn
+  if (showTutorial && running && foodSources.length > 0) {
+    const food = foodSources[0]
+    const pulse = 0.6 + 0.4 * Math.sin(tutorialPulse)
+    ctx.save()
+    ctx.globalAlpha = pulse
+    ctx.fillStyle = '#ffdd55'
+    ctx.strokeStyle = '#ffdd55'
+    ctx.lineWidth = 2
+    ctx.font = 'bold 13px Courier New'
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'middle'
+
+    // Draw label above colony
+    ctx.fillText('DRAW A TRAIL TO FOOD', colonyX, colonyY - COLONY_RADIUS - 28)
+
+    // Draw arrow line from colony toward first food
+    const dx = food.x - colonyX
+    const dy = food.y - colonyY
+    const dist = Math.hypot(dx, dy)
+    const normX = dx / dist
+    const normY = dy / dist
+    const arrowStart = COLONY_RADIUS + 6
+    const arrowEnd = Math.min(dist - FOOD_RADIUS - 10, 80)
+
+    if (arrowEnd > arrowStart) {
+      const sx = colonyX + normX * arrowStart
+      const sy = colonyY + normY * arrowStart
+      const ex = colonyX + normX * arrowEnd
+      const ey = colonyY + normY * arrowEnd
+
+      ctx.beginPath()
+      ctx.moveTo(sx, sy)
+      ctx.lineTo(ex, ey)
+      ctx.stroke()
+
+      // Arrowhead
+      const headLen = 10
+      const angle = Math.atan2(normY, normX)
+      ctx.beginPath()
+      ctx.moveTo(ex, ey)
+      ctx.lineTo(ex - headLen * Math.cos(angle - 0.4), ey - headLen * Math.sin(angle - 0.4))
+      ctx.lineTo(ex - headLen * Math.cos(angle + 0.4), ey - headLen * Math.sin(angle + 0.4))
+      ctx.closePath()
+      ctx.fill()
+    }
+
+    ctx.restore()
+  }
 }
 
 function drawPheromoneLayer(w: number, h: number): void {
@@ -426,6 +597,9 @@ function drawPheromoneLayer(w: number, h: number): void {
 function drawTrail(x: number, y: number): void {
   if (!running) return
 
+  // Dismiss tutorial on first pheromone draw
+  if (showTutorial) showTutorial = false
+
   // Paint pheromone in a small radius
   const r = 2  // cells
   for (let dy = -r; dy <= r; dy++) {
@@ -457,7 +631,8 @@ canvas.addEventListener('mousemove', (e) => {
   const y = (e.clientY - rect.top) * sy
 
   // Interpolate between last and current position
-  const steps = Math.ceil(Math.hypot(x - lastDrawX, y - lastDrawY) / (PHM_SCALE / 2))
+  // Step every 2px for smooth fill even on fast mouse moves
+  const steps = Math.ceil(Math.hypot(x - lastDrawX, y - lastDrawY) / 2)
   for (let i = 0; i <= steps; i++) {
     const t = steps === 0 ? 0 : i / steps
     drawTrail(lastDrawX + (x - lastDrawX) * t, lastDrawY + (y - lastDrawY) * t)
@@ -490,7 +665,8 @@ canvas.addEventListener('touchmove', (e) => {
   const touch = e.touches[0]
   const x = (touch.clientX - rect.left) * sx
   const y = (touch.clientY - rect.top) * sy
-  const steps = Math.ceil(Math.hypot(x - lastDrawX, y - lastDrawY) / (PHM_SCALE / 2))
+  // Step every 2px for smooth fill even on fast mouse moves
+  const steps = Math.ceil(Math.hypot(x - lastDrawX, y - lastDrawY) / 2)
   for (let i = 0; i <= steps; i++) {
     const t2 = steps === 0 ? 0 : i / steps
     drawTrail(lastDrawX + (x - lastDrawX) * t2, lastDrawY + (y - lastDrawY) * t2)
@@ -537,6 +713,8 @@ function startGame(): void {
   running = true
   gameOver = false
   drawing = false
+  showTutorial = true  // show tutorial hint at start of each game
+  tutorialPulse = 0
   initGame()
   audio.start()
   const ov = document.getElementById('overlay')!

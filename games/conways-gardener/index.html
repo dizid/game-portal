@@ -31,8 +31,9 @@
       .ctrl-btn.danger:hover { background: rgba(60,20,20,0.8); border-color: #ff8888; }
       #level-info { font-size: 12px; color: rgba(200,200,255,0.8); flex: 1; text-align: center; }
       #seeds-label { font-size: 12px; color: rgba(200,200,255,0.7); }
-      .seed-pip { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #88ff88; margin: 0 2px; }
-      .seed-pip.used { background: rgba(80,80,80,0.5); }
+      #seeds-section { display: flex; align-items: center; gap: 4px; }
+      .seed-pip { display: inline-block; width: 11px; height: 11px; border-radius: 50%; background: #88ff88; margin: 0 2px; box-shadow: 0 0 4px rgba(136,255,136,0.6); }
+      .seed-pip.used { background: rgba(60,60,80,0.7); box-shadow: none; }
       #overlay {
         position: absolute; inset: 0; background: rgba(5,5,15,0.93);
         display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -60,7 +61,6 @@
         <div class="hud-box">LEVEL <span id="level-val">1</span>/10</div>
         <div class="hud-box">GEN <span id="gen-val">0</span></div>
         <div class="hud-box">SCORE <span id="score-val">0</span></div>
-        <div class="hud-box">SEEDS LEFT <span id="seeds-val">5</span></div>
         <div class="hud-box">STATUS <span id="status-val">Placing</span></div>
       </div>
       <div id="canvas-wrap">
@@ -68,10 +68,16 @@
       </div>
       <div id="controls">
         <div id="level-info">Click cells to plant seeds</div>
-        <div id="seeds-display"></div>
+        <div id="seeds-section">
+          <span id="seeds-label">Seeds:</span>
+          <div id="seeds-display"></div>
+          <span id="seeds-val" style="display:none">0</span>
+        </div>
         <button class="ctrl-btn" id="play-btn">Play</button>
         <button class="ctrl-btn" id="step-btn">Step</button>
         <button class="ctrl-btn danger" id="rewind-btn">Rewind</button>
+        <button class="ctrl-btn" id="speed-btn">Speed: Normal</button>
+        <button class="ctrl-btn" id="hint-btn" style="display:none;border-color:rgba(255,200,40,0.6);color:#ffcc28;">Hint</button>
       </div>
     </div>
     <button id="mute-btn">🔊</button>

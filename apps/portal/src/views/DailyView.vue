@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useHead } from '@unhead/vue'
 import { useGamesStore } from '../stores/games'
 import GameCard from '../components/GameCard.vue'
 
 const gamesStore = useGamesStore()
+
+// SEO
+useHead({
+  title: 'Daily Challenge — Free Browser Game of the Day | Game Portal',
+  meta: [
+    { name: 'description', content: 'Play today\'s daily challenge game. A new browser game every day — test your skills, compete for the top score. Free, no download.' },
+    { property: 'og:title', content: 'Daily Challenge | Game Portal' },
+    { property: 'og:description', content: 'A new browser game challenge every day. Free, no download.' },
+  ],
+  link: [{ rel: 'canonical', href: 'https://google4games.com/daily' }],
+})
 
 const dailyGames = computed(() => gamesStore.getDailyGames())
 

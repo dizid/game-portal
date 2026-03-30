@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { useGamesStore } from '../stores/games'
 import { usePersonaStore } from '../stores/persona'
 import { useGameBridge } from '../composables/useGameBridge'
 import GameCard from '../components/GameCard.vue'
 import CategoryBadge from '../components/CategoryBadge.vue'
 import ShareButtons from '../components/ShareButtons.vue'
+
+declare function gtag(...args: unknown[]): void
 
 const props = defineProps<{
   category: string
@@ -18,6 +21,43 @@ const gamesStore = useGamesStore()
 const personaStore = usePersonaStore()
 
 const game = computed(() => gamesStore.getGameBySlug(props.slug))
+
+// SEO: dynamic head meta + JSON-LD per game
+useHead(computed(() => {
+  const g = game.value
+  if (!g) return { title: 'Game Not Found — Game Portal' }
+  return {
+    title: `${g.title} — Play Free Online | Game Portal`,
+    meta: [
+      { name: 'description', content: `Play ${g.title} free in your browser — no download, no login. ${g.description}` },
+      { property: 'og:title', content: `${g.title} — Play Free Online | Game Portal` },
+      { property: 'og:description', content: `Play ${g.title} free in your browser. ${g.description}` },
+      { property: 'og:type', content: 'website' },
+      { property: 'og:url', content: `https://google4games.com/games/${g.category}/${g.slug}` },
+      { name: 'twitter:card', content: 'summary_large_image' },
+      { name: 'twitter:title', content: `${g.title} — Play Free | Game Portal` },
+    ],
+    link: [
+      { rel: 'canonical', href: `https://google4games.com/games/${g.category}/${g.slug}` },
+    ],
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'SoftwareApplication',
+          'name': g.title,
+          'description': g.description,
+          'applicationCategory': 'GameApplication',
+          'operatingSystem': 'Any (Browser)',
+          'offers': { '@type': 'Offer', 'price': '0', 'priceCurrency': 'USD' },
+          'genre': g.category,
+          'keywords': g.tags.join(', '),
+        }),
+      },
+    ],
+  }
+}))
 const relatedGames = computed(() => {
   if (!game.value) return []
   return gamesStore
@@ -44,13 +84,35 @@ const bridge = useGameBridge({
     if (game.value) {
       const playTimeMinutes = Math.round((Date.now() - startTime.value) / 60000)
       personaStore.updateFromBehavior(game.value.category, playTimeMinutes)
+      // GA4: track game over
+      if (typeof gtag === 'function') {
+        gtag('event', 'game_over', {
+          game_id: game.value.id,
+          game_slug: game.value.slug,
+          game_category: game.value.category,
+          final_score: score,
+          play_duration_seconds: Math.round((Date.now() - startTime.value) / 1000),
+        })
+      }
     }
   },
   onShare(payload) {
     showShareModal.value = true
+    // GA4: track share
+    if (typeof gtag === 'function' && game.value) {
+      gtag('event', 'game_share', {
+        game_id: game.value.id,
+        game_slug: game.value.slug,
+        share_method: 'in_game',
+      })
+    }
     console.info('[GameBridge] share requested', payload)
   },
   onTrack(event, data) {
+    // Forward SDK track events to GA4
+    if (typeof gtag === 'function') {
+      gtag('event', `sdk_${event}`, { ...data, game_slug: props.slug })
+    }
     console.info('[GameBridge] track', event, data)
   },
 })
@@ -85,6 +147,15 @@ function onIframeLoad(): void {
     gameId: game.value.id,
     gameSlug: game.value.slug,
   })
+  // GA4: track game start
+  if (typeof gtag === 'function') {
+    gtag('event', 'game_start', {
+      game_id: game.value.id,
+      game_slug: game.value.slug,
+      game_category: game.value.category,
+      game_tier: game.value.tier,
+    })
+  }
 }
 
 function toggleFullscreen(): void {

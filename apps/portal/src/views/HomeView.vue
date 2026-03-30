@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { useGamesStore } from '../stores/games'
 import { usePersonaStore } from '../stores/persona'
 import GameCard from '../components/GameCard.vue'
@@ -8,6 +9,35 @@ import type { GameCategory } from '@game-portal/types'
 
 const gamesStore = useGamesStore()
 const personaStore = usePersonaStore()
+
+// SEO: head meta + JSON-LD
+useHead({
+  title: 'Game Portal — Free Browser Games That Reward Thinking',
+  meta: [
+    { name: 'description', content: '80+ free browser games — classic arcade, puzzles, strategy, and unique game theory simulations. No download, no account. Play instantly.' },
+    { property: 'og:title', content: 'Game Portal — Free Browser Games That Reward Thinking' },
+    { property: 'og:description', content: '80+ free browser games including game theory simulations, physics puzzles, and classic arcade. No download, no account.' },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+  ],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'WebSite',
+        'name': 'Game Portal',
+        'url': 'https://google4games.com',
+        'description': 'Free browser games that reward thinking. 80+ games including game theory simulations, physics puzzles, and classic arcade.',
+        'potentialAction': {
+          '@type': 'SearchAction',
+          'target': 'https://google4games.com/games?q={search_term_string}',
+          'query-input': 'required name=search_term_string',
+        },
+      }),
+    },
+  ],
+})
 
 const featuredGames = computed(() => gamesStore.getFeaturedGames())
 
@@ -79,15 +109,15 @@ const PERSONA_DESCRIPTIONS: Record<string, string> = {
           <span>Free games, no downloads</span>
         </div>
 
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 leading-tight">
-          Play Free Games
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white mb-4 leading-tight font-[family-name:var(--font-family-display)]">
+          Free Games That
           <span class="bg-gradient-to-r from-primary-light via-accent to-pink-400 bg-clip-text text-transparent block sm:inline">
-            Instantly
+            Reward Thinking
           </span>
         </h1>
 
         <p class="text-lg text-white/60 max-w-xl mx-auto mb-8">
-          Hundreds of browser games across 12 categories. No account, no downloads — just play.
+          80+ browser games — from classic arcade to game theory simulations. No account, no downloads — just play.
         </p>
 
         <!-- CTA area -->

@@ -50,6 +50,7 @@ import NavBar from './components/NavBar.vue'
               <li><a href="/games/action" class="text-sm text-white/50 hover:text-white transition-colors">Action</a></li>
               <li><a href="/games/card" class="text-sm text-white/50 hover:text-white transition-colors">Card Games</a></li>
               <li><a href="/games/trivia" class="text-sm text-white/50 hover:text-white transition-colors">Trivia</a></li>
+              <li><a href="/ratings" class="text-sm text-white/50 hover:text-white transition-colors">Ratings</a></li>
             </ul>
           </div>
 

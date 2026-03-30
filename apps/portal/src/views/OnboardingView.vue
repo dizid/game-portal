@@ -1,11 +1,21 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useHead } from '@unhead/vue'
 import { usePersonaStore } from '../stores/persona'
 import type { GamerPersona, PersonaProfile } from '@game-portal/types'
 
 const router = useRouter()
 const personaStore = usePersonaStore()
+
+// SEO — noindex since this is a quiz flow
+useHead({
+  title: 'Discover Your Gaming Persona | Game Portal',
+  meta: [
+    { name: 'robots', content: 'noindex' },
+    { name: 'description', content: 'Take our 60-second quiz to discover your gaming persona and get personalized game recommendations.' },
+  ],
+})
 
 // Step 0=welcome, 1=time, 2=style, 3=challenge, 4=results
 const step = ref(0)

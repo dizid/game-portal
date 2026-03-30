@@ -123,6 +123,12 @@ function closeMobileMenu(): void {
           >
             Daily
           </RouterLink>
+          <RouterLink
+            to="/ratings"
+            class="px-3 py-1.5 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            Ratings
+          </RouterLink>
         </div>
 
         <!-- Right actions -->
@@ -175,6 +181,13 @@ function closeMobileMenu(): void {
             @click="closeMobileMenu"
           >
             Daily Challenge
+          </RouterLink>
+          <RouterLink
+            to="/ratings"
+            class="block px-3 py-2 text-sm text-white/70 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            @click="closeMobileMenu"
+          >
+            Ratings
           </RouterLink>
           <RouterLink
             to="/onboarding"
